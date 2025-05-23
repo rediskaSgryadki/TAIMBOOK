@@ -1,0 +1,304 @@
+body {
+  margin: 0;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@font-face {
+  font-family: 'zag';
+  src: url(../public/fonts/ARCO.ttf);
+}
+@font-face {
+  font-family: 'text';
+  src: url(../public/fonts/ZapusSans-SemiBold.ttf);
+}
+:root {
+  --color-dark:	#333333;
+  --color-blue:	#A3C9C9;
+  --color-green: #34C6A0
+}
+
+.zag{
+  font-family: zag;
+}
+.text{
+  font-family: text;
+}
+
+/* Tailwind Dark Mode Support for Standard Pages */
+@layer base {
+  body {
+    @apply bg-white text-neutral-900 transition-colors duration-200;
+  }
+  
+  .dark body {
+    @apply bg-neutral-800 text-white transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-neutral-100 transition-colors duration-200;
+  }
+  
+  .dark .card {
+    @apply bg-neutral-700 transition-colors duration-200;
+  }
+  
+  .dark a {
+    @apply text-blue;
+  }
+  
+  .dark .bg-white {
+    @apply bg-neutral-900;
+  }
+  
+  .dark .bg-neutral-100 {
+    @apply bg-neutral-800;
+  }
+  
+  .dark .bg-neutral-200 {
+    @apply bg-neutral-700;
+  }
+  
+  .dark .bg-neutral-300 {
+    @apply bg-neutral-600;
+  }
+}
+
+/* Default Light Theme for Account Pages */
+.light-theme {
+  background-color: white;
+  color: #393e46;
+  .card{
+    background-color: rgb(241, 241, 241);
+  }
+  .button{
+    background-color: #4ade80;
+    color: white;
+  }
+  body {
+    background-color: white;
+  }
+}
+
+/* Default Dark Theme */
+.dark-theme {
+  background-color: #333333;
+  color: white;
+  .card{
+    background-color: #545454;
+  }
+  .button{
+    background-color: #22c55e;
+    color: white;
+  }
+  body {
+    background-color: #333333;
+  }
+}
+
+/* Smoky Garden Theme - Light */
+.SmokyGarden-light-theme{
+  background-color: #c3dbd9;
+  color: #394c58;
+  .card{
+    background-color: #e5e7e1;
+    color: #394c58;
+  }
+  .button{
+    background-color: #bfd397;
+    color: #394c58;
+  }
+  body {
+    background-color: #c3dbd9;
+  }
+}
+
+/* Smoky Garden Theme - Dark */
+.SmokyGarden-dark-theme{
+  background-color: #5d7682;
+  color: white;
+  .card{
+    background-color: #9a8e85;
+    color: white;
+  }
+  .button{
+    background-color: #869c68;
+    color: white;
+  }
+  body {
+    background-color: #5d7682;
+  }
+}
+
+/* Blue Pages Theme - Light */
+.BluePages-light-theme{
+  background-color: #c4e0f3;
+  color: #2c4b66;
+  .card{
+    background-color: #d9e6f2;
+    color: #2c4b66;
+  }
+  .button{
+    background-color: #cad9bc;
+    color: #2c4b66;
+  }
+  body {
+    background-color: #c4e0f3;
+  }
+}
+
+/* Blue Pages Theme - Dark */
+.BluePages-dark-theme{
+  background-color: #2a537a;
+  color: white;
+  .card{
+    background-color: #677f8f;
+    color: white;
+  }
+  .button{
+    background-color: #a3b287;
+    color: white;
+  }
+  body {
+    background-color: #2a537a;
+  }
+}
+
+/* Midnight Entries Theme - Light */
+.MidnightEntries-light-theme{
+  background-color: #abbccd;
+  color: #2b313c;
+  .card{
+    background-color: #7fb7d5;
+    color: #2b313c;
+  }
+  .button{
+    background-color: #f9dece;
+    color: #2b313c;
+  }
+  body {
+    background-color: #abbccd;
+  }
+}
+
+/* Midnight Entries Theme - Dark */
+.MidnightEntries-dark-theme{
+  background-color: #2e3240;
+  color: white;
+  .card{
+    background-color: #214d62;
+    color: white;
+  }
+  .button{
+    background-color: #e5b9a0;
+    color: #2b313c;
+  }
+  body {
+    background-color: #2e3240;
+  }
+}
+
+/* Pastel Entries Theme - Light */
+.PastelEntries-light-theme{
+  background-color: #d9daec;
+  color: #5d5e6f;
+  .card{
+    background-color: #fdf0db;
+    color: #5d5e6f;
+  }
+  .button{
+    background-color: #e1d7ca;
+    color: #5d5e6f;
+  }
+  body {
+    background-color: #d9daec;
+  }
+}
+
+/* Pastel Entries Theme - Dark */
+.PastelEntries-dark-theme{
+  background-color: #7a7b8f;
+  color: white;
+  .card{
+    background-color: #ebc283;
+    color: #4a4a52;
+  }
+  .button{
+    background-color: #bdb3a6;
+    color: #4a4a52;
+  }
+  body {
+    background-color: #7a7b8f;
+  }
+}
+
+.emotions-welcome-bg {
+  background-image: url('../public/img/Account/04.05.2025 0_56_53.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+.account-welcome-bg {
+  background-image: url('../public/img/Account/04.05.2025 1_12_40.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+
+.emotion-button {
+  @apply p-3 rounded-full text-2xl font-bold transition-colors duration-200;
+}
+
+.emotion-button.joy {
+  @apply bg-green-100 text-green-600 hover:bg-green-600;
+}
+
+.emotion-button.sadness {
+  @apply bg-red-100 text-red-600 hover:bg-red-600;
+}
+
+.emotion-button.neutral {
+  @apply bg-yellow-100 text-yellow-600 hover:bg-yellow-500;
+}
+
+@keyframes scroll-reviews {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scroll-reviews {
+  animation: scroll-reviews 30s linear infinite;
+}
+
+.animate-scroll-reviews:hover {
+  animation-play-state: paused;
+}
+
+@keyframes pulse-button {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(52, 198, 160, 0.7);
+  }
+  
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(52, 198, 160, 0);
+  }
+  
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(52, 198, 160, 0);
+  }
+}
+
+.pulse-button {
+  animation: pulse-button 2s infinite;
+}

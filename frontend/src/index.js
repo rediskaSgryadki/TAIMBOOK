@@ -1,0 +1,53 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import axios from 'axios';
+import './index.css';
+import App from './App';
+import { getToken, clearAuthData } from './utils/authUtils';
+
+// Configure axios defaults
+axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.headers.common['Accept'] = 'application/json';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// Add request interceptor for authentication
+axios.interceptors.request.use(
+  config => {
+    const token = getToken();
+    if (token) {
+      console.log('Adding token to request:', config.url);
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for handling auth errors
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      console.error('Authentication error:', error.response.data);
+      console.error('Failed URL:', error.config.url);
+      clearAuthData();
+      window.location.href = '/auth';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Apply standard theme on page load
+const savedStandardTheme = localStorage.getItem('standard-theme') || 'light';
+if (savedStandardTheme === 'dark') {
+  document.documentElement.classList.add('dark');
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

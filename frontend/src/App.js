@@ -1,0 +1,45 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import { UserProvider } from './context/UserContext';
+import './App.css';
+
+import Home from './pages/Home';
+import Auth from './pages/Auth';
+import AccountHome from './pages/account/AccountHome'
+import EntryEditor from './pages/account/entries/EntryEditor';
+import EntryView from './pages/account/entries/EntryView';
+import EntriesList from './pages/account/entries/EntriesList';
+import Emotions from './pages/account/Emotions';
+import Profile from './pages/social/profile/Profile';
+import ProfileSettings from './pages/social/profile/ProfileSettings';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import UserAgreement from './pages/UserAgreement';
+import About from './pages/About';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <UserProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/user-agreement" element={<UserAgreement />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/account/home" element={<AccountHome />} />
+            <Route path="/account/entry/:id" element={<EntryView />} />
+            <Route path="/account/entries" element={<EntriesList />} />
+            <Route path="/account/new-entry" element={<EntryEditor />} />
+            <Route path="/account/emotions" element={<Emotions />} />
+            <Route path="/profile/:username" element={<Profile />} />
+            <Route path="/social/profile/settings" element={<ProfileSettings />} />
+          </Routes>
+        </Router>
+      </UserProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;
