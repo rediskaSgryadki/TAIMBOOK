@@ -26,7 +26,7 @@ const Comments = () => {
   const handleSubmitReview = async (reviewData) => {
     try {
       console.log('Sending review data:', reviewData);
-      const response = await axios.post('/api/reviews/', {
+      const response = await axios.post('http://localhost:8000/api/reviews/', {
         author: reviewData.author,
         text: reviewData.text,
         rating: parseInt(reviewData.rating)
@@ -63,7 +63,7 @@ const Comments = () => {
                 {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
               </div>
             </div>
-            <p className="text text-lg text-gray-600 dark:text-gray-300 mb-4">
+            <p className="text text-lg text-gray-600 dark:text-gray-300 mb-4" style={{ wordBreak: 'break-word' }}>
               {review.text}
             </p>
             <div className="text-sm text-gray-500 dark:text-gray-400">

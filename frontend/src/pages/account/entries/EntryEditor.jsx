@@ -6,7 +6,7 @@ import Footer from '../../../components/Footer';
 import axios from 'axios';
 import { checkTokenValidity, getUserData, getToken } from '../../../utils/authUtils';
 import Loader from '../../../components/Loader';
-import { AiOutlineFontSize, AiOutlineAlignLeft, AiOutlineAlignCenter, AiOutlineAlignRight, AiOutlineBold, AiOutlineUnderline, AiOutlineStrikethrough, AiOutlineUnorderedList, AiOutlineOrderedList, AiOutlineBgColors, AiOutlinePicture, AiOutlineTable } from 'react-icons/ai';
+import { AiOutlineFontSize, AiOutlineAlignLeft, AiOutlineAlignCenter, AiOutlineAlignRight, AiOutlineBold, AiOutlineUnderline, AiOutlineStrikethrough, AiOutlineUnorderedList, AiOutlineOrderedList, AiOutlineBgColors, AiOutlinePicture } from 'react-icons/ai';
 import { FiMapPin } from 'react-icons/fi';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -50,11 +50,7 @@ const EntryEditor = () => {
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const yandexApiKey = '27861ba2-1edf-4ada-9c93-c277cf2a043a';
   const mapRef = useRef(null);
-  const [coverImages, setCoverImages] = useState([]);
   const { theme, isDarkMode } = useTheme();
-  const [showTablePicker, setShowTablePicker] = useState(false);
-  const [tableRows, setTableRows] = useState(2);
-  const [tableCols, setTableCols] = useState(2);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
@@ -66,6 +62,8 @@ const EntryEditor = () => {
       range.collapse(false);
       sel.removeAllRanges();
       sel.addRange(range);
+      // Manually trigger input to update initial htmlContent state
+      handleTextChange({ target: contentRef.current });
     }
   }, []);
 
@@ -75,14 +73,26 @@ const EntryEditor = () => {
       navigate('/auth');
       return;
     }
-    checkTokenValidity(
-      () => setLoading(false),
-      (errorMsg) => {
-        setError(errorMsg);
-        setTimeout(() => navigate('/auth'), 2000);
-      }
-    );
-  }, [navigate]);
+    // Check token validity but don't block loading if in edit mode
+    if (!isEditMode) {
+       checkTokenValidity(
+        () => setLoading(false),
+        (errorMsg) => {
+          setError(errorMsg);
+          setTimeout(() => navigate('/auth'), 2000);
+        }
+      );
+    } else {
+      // If in edit mode, token check will happen implicitly during fetchEntry
+       checkTokenValidity(
+        () => {}, // Do nothing on success
+        (errorMsg) => { // Redirect on failure
+          setError(errorMsg);
+          setTimeout(() => navigate('/auth'), 2000);
+        }
+      );
+    }
+  }, [navigate, isEditMode]);
 
   useEffect(() => {
     const fetchEntry = async () => {
@@ -105,23 +115,25 @@ const EntryEditor = () => {
           throw new Error(errorData.detail || 'Failed to fetch entry');
         }
         const data = await response.json();
-        setEntry({
+        setEntry(prev => ({
+          ...prev,
           title: data.title || '',
           content: data.content || '',
-          textColor: data.text_color || '#222222',
-          fontSize: data.font_size || '16px',
-          textAlign: data.text_align || 'left',
+          htmlContent: data.content || '', // Use data.content for htmlContent initially
           location: data.location || null,
           date: data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          coverImage: null,
           coverPreview: data.cover_image || null,
-          isBold: data.is_bold || false,
-          isUnderline: data.is_underline || false,
-          isStrikethrough: data.is_strikethrough || false,
-          listType: data.list_type || null,
+          coverImagePath: data.cover_image || null,
           hashtags: data.hashtags || '',
           isPublic: data.is_public || false,
-        });
+          // Style states are now managed by contentEditable DOM
+        }));
+
+        // Set initial content in contentEditable div
+        if (contentRef.current) {
+           contentRef.current.innerHTML = data.content || '';
+        }
+
         if (data.location) {
           setMapCenter([data.location.latitude, data.location.longitude]);
         }
@@ -134,26 +146,11 @@ const EntryEditor = () => {
     fetchEntry();
   }, [id, isEditMode, navigate]);
 
-  // Получить список обложек с бэка
-  useEffect(() => {
-    const fetchCovers = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/covers/');
-        if (!response.ok) throw new Error('Ошибка загрузки обложек');
-        const data = await response.json();
-        setCoverImages(data);
-      } catch {
-        setCoverImages([]);
-      }
-    };
-    fetchCovers();
-  }, []);
-
   const handleTextChange = (e) => {
     setEntry(prev => ({
       ...prev,
-      content: e.target.innerText,
-      htmlContent: e.target.innerHTML
+      content: e.target.innerText, // Keep plain text content if needed
+      htmlContent: e.target.innerHTML // This captures all formatting changes
     }));
   };
 
@@ -164,109 +161,48 @@ const EntryEditor = () => {
     }
   };
 
-  // Универсальное выравнивание: если курсор в таблице — выравнивает таблицу, иначе текст
-  const handleAlign = (align) => {
-    focusEditor();
-    if (!contentRef.current) return;
-
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return;
-
-    const range = sel.getRangeAt(0);
-    const node = range.commonAncestorContainer;
-
-    // Проверяем, является ли узел текстовым узлом
-    const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-
-    // Проверяем, находится ли курсор внутри таблицы
-    const table = element.closest('table');
-    if (table) {
-      const cell = element.closest('td, th');
-      if (cell) {
-        document.execCommand(align === 'left' ? 'justifyLeft' : 
-                            align === 'center' ? 'justifyCenter' : 
-                            'justifyRight', false, null);
-        return;
-      }
-    }
-
-    // Проверяем, находится ли курсор внутри контейнера таблицы
-    const container = element.closest('div[style*="width: 100%"]');
-    if (container) {
-      container.style.justifyContent = align === 'left' ? 'flex-start' : 
-                                      align === 'center' ? 'center' : 
-                                      'flex-end';
-      return;
-    }
-
-    // Если курсор не в таблице — выравниваем текст
-    document.execCommand(align === 'left' ? 'justifyLeft' : 
-                        align === 'center' ? 'justifyCenter' : 
-                        'justifyRight', false, null);
+  // Apply text formatting using execCommand
+  const applyFormat = (command, value = null) => {
+      focusEditor();
+      document.execCommand(command, false, value);
+      // Ensure state is updated after execCommand
+      handleTextChange({ target: contentRef.current });
   };
 
-  // Вставка таблицы с выбранным размером
-  const insertTable = (rows, cols) => {
-    // Убедимся, что редактор в фокусе
-    contentRef.current.focus();
+  // Text alignment using execCommand
+  const handleAlign = (align) => {
+    applyFormat(align === 'left' ? 'justifyLeft' : 
+                align === 'center' ? 'justifyCenter' : 
+                'justifyRight');
+    // Note: execCommand align might not work on all block elements or nested structures like tables.
+    // Table alignment might require different logic.
+  };
 
-    // Получаем текущую позицию курсора
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return;
+  // Font size using execCommand (use HTML standard sizes 1-7)
+  const handleFontSizeChange = (size) => {
+     // Map pixel values to execCommand sizes (approximate)
+     const sizeMap = {
+       '14px': 3, // Default browser text size is often around 16px, corresponding to size 3
+       '16px': 3, 
+       '18px': 4,
+       '20px': 5,
+     };
+     applyFormat('fontSize', sizeMap[size] || 3);
+  };
 
-    const range = sel.getRangeAt(0);
+  // Toggle text style (bold, underline, strikethrough)
+  const toggleTextStyle = (style) => {
+     applyFormat(style);
+  };
 
-    // Создаем невидимый контейнер для таблицы
-    const container = document.createElement('div');
-    container.style.width = '100%';
-    container.style.display = 'flex';
-    container.style.justifyContent = 'flex-start'; // По умолчанию выравнивание по левому краю
+  // Apply list type (unordered or ordered)
+  const handleListType = (type) => {
+     applyFormat(type === 'unordered' ? 'insertUnorderedList' : 'insertOrderedList');
+  };
 
-    // Создаем таблицу
-    const table = document.createElement('table');
-    table.setAttribute('border', '1');
-    table.style.borderCollapse = 'collapse';
-    table.style.border = '2px solid #444';
-
-    // Заполняем таблицу
-    for (let r = 0; r < rows; r++) {
-      const tr = document.createElement('tr');
-      for (let c = 0; c < cols; c++) {
-        const td = document.createElement('td');
-        td.style.border = '2px solid #444';
-        td.style.minWidth = '40px';
-        td.style.minHeight = '24px';
-        td.innerHTML = '&nbsp;';
-        tr.appendChild(td);
-      }
-      table.appendChild(tr);
-    }
-
-    // Добавляем таблицу в контейнер
-    container.appendChild(table);
-
-    // Вставляем контейнер с таблицей в позицию курсора
-    range.insertNode(container);
-
-    // Создаем пустой абзац после таблицы
-    const newParagraph = document.createElement('p');
-    newParagraph.innerHTML = '<br>'; // Пустой абзац для новой строки
-    container.after(newParagraph);
-
-    // Перемещаем курсор в новый абзац после таблицы
-    const newRange = document.createRange();
-    newRange.selectNodeContents(newParagraph);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-
-    // Обновляем состояние
-    setEntry(prev => ({
-      ...prev,
-      content: contentRef.current.innerText,
-      htmlContent: contentRef.current.innerHTML
-    }));
-    setShowTablePicker(false);
+  // Change text color
+  const handleColorChange = (color) => {
+    applyFormat('foreColor', color);
   };
 
   // Получить адрес по координатам (обратное геокодирование)
@@ -390,67 +326,6 @@ const EntryEditor = () => {
     return;
   };
 
-  const handleRandomCover = () => {
-    if (!coverImages.length) return;
-    const randomIndex = Math.floor(Math.random() * coverImages.length);
-    let randomCover = coverImages[randomIndex];
-    // Если путь относительный, делаем абсолютный
-    if (randomCover.startsWith('/media')) {
-      randomCover = `http://localhost:8000${randomCover}`;
-    }
-    setEntry(prev => ({
-      ...prev,
-      coverPreview: randomCover,
-      coverImagePath: randomCover // если нужно сохранить путь для бэка
-    }));
-  };
-
-  const handleFontSizeChange = (size) => {
-    setEntry(prev => ({
-      ...prev,
-      fontSize: size
-    }));
-  };
-
-  const handleTextAlign = (align) => {
-    setEntry(prev => ({
-      ...prev,
-      textAlign: align
-    }));
-  };
-
-  const toggleTextStyle = (style) => {
-    setEntry(prev => ({
-      ...prev,
-      [style]: !prev[style]
-    }));
-  };
-
-  const handleListType = (type) => {
-    setEntry(prev => ({
-      ...prev,
-      listType: type
-    }));
-  };
-
-  // Изменение цвета текста (выделенного или всего)
-  const handleColorChange = (color) => {
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed) {
-      document.execCommand('foreColor', false, color);
-      setEntry(prev => ({
-        ...prev,
-        htmlContent: contentRef.current.innerHTML
-      }));
-    } else if (contentRef.current) {
-      contentRef.current.style.color = color;
-      setEntry(prev => ({
-        ...prev,
-        htmlContent: contentRef.current.innerHTML
-      }));
-    }
-  };
-
   const handleDateChange = (e) => {
     setEntry(prev => ({
       ...prev,
@@ -547,93 +422,6 @@ const EntryEditor = () => {
     return html;
   };
 
-  // Позволяет редактировать ширину столбцов таблицы через drag&drop
-  useEffect(() => {
-    const editor = contentRef.current;
-    if (!editor) return;
-    // Функция для добавления ресайзеров к таблицам
-    const addTableResizers = () => {
-      const tables = editor.querySelectorAll('table');
-      tables.forEach(table => {
-        // Удаляем старые ресайзеры
-        table.querySelectorAll('.col-resizer').forEach(r => r.remove());
-        const firstRow = table.rows[0];
-        if (!firstRow) return;
-        for (let i = 0; i < firstRow.cells.length; i++) {
-          const cell = firstRow.cells[i];
-          let resizer = document.createElement('div');
-          resizer.className = 'col-resizer';
-          resizer.style.position = 'absolute';
-          resizer.style.top = '0';
-          resizer.style.right = '-3px';
-          resizer.style.width = '6px';
-          resizer.style.height = '100%';
-          resizer.style.cursor = 'col-resize';
-          resizer.style.zIndex = '10';
-          resizer.style.userSelect = 'none';
-          resizer.style.background = 'transparent';
-          resizer.onmousedown = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const startX = e.pageX;
-            const startWidth = cell.offsetWidth;
-            document.body.style.cursor = 'col-resize';
-            function onMouseMove(ev) {
-              const delta = ev.pageX - startX;
-              const newWidth = Math.max(30, startWidth + delta);
-              cell.style.width = newWidth + 'px';
-              // Применить ширину ко всем ячейкам этого столбца
-              for (let r = 0; r < table.rows.length; r++) {
-                table.rows[r].cells[i].style.width = newWidth + 'px';
-              }
-            }
-            function onMouseUp() {
-              document.removeEventListener('mousemove', onMouseMove);
-              document.removeEventListener('mouseup', onMouseUp);
-              document.body.style.cursor = '';
-            }
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-          };
-          // Обеспечить позиционирование
-          cell.style.position = 'relative';
-          cell.appendChild(resizer);
-        }
-      });
-    };
-    // Добавлять ресайзеры после каждого изменения html
-    addTableResizers();
-    // Также при клике внутри редактора (на случай вставки таблицы)
-    editor.addEventListener('click', addTableResizers);
-    return () => {
-      editor.removeEventListener('click', addTableResizers);
-    };
-  }, [entry.htmlContent]);
-
-  // Добавляем новые функции для выравнивания
-  const handleTableAlign = (alignment) => {
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    const table = range.commonAncestorContainer.closest('table');
-    
-    if (!table) return;
-
-    // Если курсор внутри ячейки таблицы
-    const cell = range.commonAncestorContainer.closest('td, th');
-    if (cell) {
-      cell.style.textAlign = alignment;
-      return;
-    }
-
-    // Если курсор перед таблицей
-    table.style.marginLeft = alignment === 'left' ? '0' : 
-                            alignment === 'center' ? 'auto' : 
-                            alignment === 'right' ? 'auto' : '0';
-    table.style.marginRight = alignment === 'left' ? 'auto' : 
-                             alignment === 'center' ? 'auto' : 
-                             alignment === 'right' ? '0' : 'auto';
-  };
-
   // Функция для получения класса цвета хэштега в зависимости от длины
   const getHashtagColorClass = (tag) => {
     const length = tag.length;
@@ -678,14 +466,13 @@ const EntryEditor = () => {
             </button>
             {showFontSizeMenu && (
               <div className="absolute left-12 z-10 mt-1 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-2">
-                {['14px', '16px', '18px', '20px'].map(size => (
+                {/* Use pixel values in UI, map to execCommand sizes in handler */}
+                {[ '14px', '16px', '18px', '20px'].map(size => (
                   <button
                     key={size}
                     type="button"
-                    onClick={() => {
-                      handleAlign('center');
-                      setShowFontSizeMenu(false);
-                    }}
+                    // Call the new handler
+                    onClick={() => { handleFontSizeChange(size); setShowFontSizeMenu(false); }}
                     className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
                   >
                     {size}
@@ -701,6 +488,8 @@ const EntryEditor = () => {
               onClick={() => setShowAlignMenu(!showAlignMenu)}
               className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded"
             >
+              {/* Display current alignment icon based on selection or container */}
+              {/* This requires more complex logic to determine current style; simplified for now */}
               {ALIGN_ICONS.left}
             </button>
             {showAlignMenu && (
@@ -801,40 +590,10 @@ const EntryEditor = () => {
           >
             <FiMapPin className="w-6 h-6" color={isDarkMode ? '#fff' : '#333'} />
           </button>
-          {/* Table button */}
-          <button
-            type="button"
-            onClick={() => setShowTablePicker(v => !v)}
-            className="mt-2 p-2 rounded transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
-            title="Вставить таблицу"
-          >
-            <AiOutlineTable className="w-6 h-6" />
-          </button>
-          {showTablePicker && (
-            <div className="absolute left-16 top-0 z-20 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg shadow-lg p-3 flex flex-col items-center">
-              <div className="mb-2 text-xs text-neutral-700 dark:text-neutral-200">Выберите размер таблицы</div>
-              <div className="flex flex-col gap-1">
-                {[...Array(6)].map((_, r) => (
-                  <div key={r} className="flex gap-1">
-                    {[...Array(6)].map((_, c) => (
-                      <div
-                        key={c}
-                        onMouseEnter={() => { setTableRows(r+1); setTableCols(c+1); }}
-                        onClick={() => insertTable(r+1, c+1)}
-                        className={`w-5 h-5 border ${r < tableRows && c < tableCols ? 'bg-blue-400' : 'bg-neutral-200 dark:bg-neutral-700'} cursor-pointer`}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 text-xs text-neutral-700 dark:text-neutral-200">{tableRows} x {tableCols}</div>
-              <button className="mt-2 text-xs text-blue-600 hover:underline" onClick={() => setShowTablePicker(false)}>Отмена</button>
-            </div>
-          )}
         </aside>
 
         {/* Main form */}
-        <main className="flex-1 flex flex-col px-10 py-10 shadow-[inset_0px_0px_19px_4px_rgba(0,_0,_0,_0.1)]">
+        <main className="flex-1 flex flex-col px-10 py-10 fon">
           <div className="w-full flex flex-col">
             {/* Первая строка: заголовок и дата */}
             <div className="flex items-end gap-4 mb-2">
@@ -938,13 +697,6 @@ const EntryEditor = () => {
                           hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
                       />
                     </label>
-                    <button
-                      type="button"
-                      onClick={handleRandomCover}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      Случайная обложка
-                    </button>
                   </div>
                 </div>
               </div>

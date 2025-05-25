@@ -40,7 +40,8 @@ const PinForm = ({ onSuccess }) => {
 
   const handleSubmit = async () => {
     setError('');
-    if (pin.some(d => d === '')) {
+    const pinString = pin.join('');
+    if (pinString.length !== 4) {
       setError('Введите все 4 цифры PIN-кода');
       return;
     }
@@ -54,10 +55,7 @@ const PinForm = ({ onSuccess }) => {
         }, 2000);
         return;
       }
-      const pinString = pin.join('');
-      const response = await axios.post('http://localhost:8000/api/users/verify-pin/', {
-        pin_code: pinString
-      }, {
+      const response = await axios.post('http://localhost:8000/api/users/verify-pin/', { pin_code: pinString }, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -171,7 +171,7 @@ const EntryView = () => {
   const hashtagsList = formatHashtags(entry.hashtags);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+    <div className="min-h-screen">
       <AccountHeader />
       <div className='w-full space-y-10 h-screen mt-12 px-20'>
         <div className='flex gap-10'>

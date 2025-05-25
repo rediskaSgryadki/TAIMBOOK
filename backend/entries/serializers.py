@@ -26,6 +26,19 @@ class EntrySerializer(serializers.ModelSerializer):
             logger.error(f"Error creating entry: {str(e)}")
             raise serializers.ValidationError(f"Error creating entry: {str(e)}")
 
+    def update(self, instance, validated_data):
+        # Handle cover image update separately if present
+        cover_image = validated_data.pop('cover_image', None)
+        if cover_image is not None:
+            instance.cover_image = cover_image
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # Convert content to HTML if it's not already

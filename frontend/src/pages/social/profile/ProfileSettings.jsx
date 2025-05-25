@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AccountHeader from '../../../components/account/AccountHeader'
 import axios from 'axios'
-import { getToken } from '../../../utils/authUtils'
+import { getToken, setAuthData } from '../../../utils/authUtils'
 import { useTheme } from '../../../context/ThemeContext'
 
 const ProfileSettings = () => {
@@ -84,7 +84,7 @@ const ProfileSettings = () => {
         
         setUserData(response.data);
         setName(response.data.username || '');
-        setPhotoPreview(response.data.profile_photo || '');
+        setPhotoPreview(response.data.profile_photo_url || '');
         setLoading(false);
       } catch (error) {
         console.error('Ошибка загрузки данных пользователя:', error);
@@ -112,6 +112,10 @@ const ProfileSettings = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Original handleSubmit logic will be split into dedicated functions
+  };
+
+  const handleUpdateUsername = async () => {
     setErrorMessage('');
     setSuccessMessage('');
     setLoading(true);
@@ -119,24 +123,56 @@ const ProfileSettings = () => {
     try {
       const token = getToken();
       const formData = new FormData();
-      
       formData.append('username', name);
-      if (profilePhoto) {
-        formData.append('profile_photo', profilePhoto);
-      }
       
-      await axios.patch('http://localhost:8000/api/users/profile/update/', formData, {
+      const response = await axios.patch('http://localhost:8000/api/users/me/', formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
-      
-      setSuccessMessage('Профиль успешно обновлен');
+      setUserData(response.data);
+      setName(response.data.username || '');
+      // Update user data in localStorage after successful username update
+      setAuthData({ user: response.data });
+      setSuccessMessage('Имя пользователя успешно обновлено');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      console.error('Ошибка обновления профиля:', error);
-      setErrorMessage('Не удалось обновить профиль. Пожалуйста, попробуйте позже.');
+      console.error('Ошибка обновления имени пользователя:', error);
+      setErrorMessage('Не удалось обновить имя пользователя. Пожалуйста, попробуйте позже.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePhoto = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    setLoading(true);
+    
+    try {
+      const token = getToken();
+      const formData = new FormData();
+      if (profilePhoto) {
+        formData.append('profile_photo', profilePhoto);
+      }
+      
+      const response = await axios.patch('http://localhost:8000/api/users/me/', formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setUserData(response.data);
+      // Update photo preview with the new URL from the response
+      setPhotoPreview(response.data.profile_photo_url ? `http://localhost:8000${response.data.profile_photo_url}` : '');
+      // Update user data in localStorage after successful photo update
+      setAuthData({ user: response.data });
+      setSuccessMessage('Фото профиля успешно обновлено');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Ошибка обновления фото профиля:', error);
+      setErrorMessage('Не удалось обновить фото профиля. Пожалуйста, попробуйте позже.');
     } finally {
       setLoading(false);
     }
@@ -221,7 +257,7 @@ const ProfileSettings = () => {
                             />
                           </div>
                           <button 
-                            onClick={handleSubmit}
+                            onClick={handleUpdateUsername}
                             className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
                           >
                             Сохранить имя
@@ -248,7 +284,7 @@ const ProfileSettings = () => {
                         <div className="flex flex-col md:flex-row items-center gap-6">
                           <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {photoPreview ? (
-                              <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                              <img src={photoPreview}  className="w-full h-full object-cover" />
                             ) : (
                               <span className="text-4xl">👤</span>
                             )}
@@ -263,7 +299,7 @@ const ProfileSettings = () => {
                             />
                             <p className="mt-1 text-sm opacity-70">PNG, JPG размером до 2MB</p>
                             <button 
-                              onClick={handleSubmit}
+                              onClick={handleUpdatePhoto}
                               className="mt-4 py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
                             >
                               Сохранить фото

@@ -75,7 +75,7 @@ body {
     background-color: #4ade80;
     color: white;
   }
-  body {
+  .fon {
     background-color: white;
   }
 }
@@ -91,7 +91,7 @@ body {
     background-color: #22c55e;
     color: white;
   }
-  body {
+  .fon {
     background-color: #333333;
   }
 }
@@ -108,7 +108,7 @@ body {
     background-color: #bfd397;
     color: #394c58;
   }
-  body {
+  .fon {
     background-color: #c3dbd9;
   }
 }
@@ -125,7 +125,7 @@ body {
     background-color: #869c68;
     color: white;
   }
-  body {
+  .fon {
     background-color: #5d7682;
   }
 }
@@ -142,7 +142,7 @@ body {
     background-color: #cad9bc;
     color: #2c4b66;
   }
-  body {
+  .fon {
     background-color: #c4e0f3;
   }
 }
@@ -159,7 +159,7 @@ body {
     background-color: #a3b287;
     color: white;
   }
-  body {
+  .fon {
     background-color: #2a537a;
   }
 }
@@ -176,7 +176,7 @@ body {
     background-color: #f9dece;
     color: #2b313c;
   }
-  body {
+  .fon {
     background-color: #abbccd;
   }
 }
@@ -193,7 +193,7 @@ body {
     background-color: #e5b9a0;
     color: #2b313c;
   }
-  body {
+  .fon {
     background-color: #2e3240;
   }
 }
@@ -210,7 +210,7 @@ body {
     background-color: #e1d7ca;
     color: #5d5e6f;
   }
-  body {
+  .fon {
     background-color: #d9daec;
   }
 }
@@ -227,7 +227,7 @@ body {
     background-color: #bdb3a6;
     color: #4a4a52;
   }
-  body {
+  .fon {
     background-color: #7a7b8f;
   }
 }

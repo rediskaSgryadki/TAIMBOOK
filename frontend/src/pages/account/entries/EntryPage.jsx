@@ -20,7 +20,7 @@ const EntryPage = () => {
           return;
         }
 
-        const response = await fetch(`${API_URL}/entries/${id}`, {
+        const response = await fetch(`http://localhost:8000/api/entries/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -55,7 +55,7 @@ const EntryPage = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/entries/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/entries/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

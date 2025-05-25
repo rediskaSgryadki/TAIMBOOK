@@ -1,71 +1,70 @@
 // Утилиты для аутентификации
 
 /**
- * Сохраняет данные аутентификации пользователя в localStorage
+ * Сохраняет данные аутентификации пользователя в sessionStorage.
+ * Refresh токен сохраняется в localStorage.
  * @param {Object} data - Содержит access и refresh токены, а также информацию о пользователе
  */
-export const setAuthData = (data) => { // Экспортируемая функция для сохранения данных аутентификации
-  if (data.access) { // Если есть поле access (access token)
-    localStorage.setItem('token', data.access); // Сохраняем access token под ключом 'token'
-    localStorage.setItem('accessToken', data.access); // Сохраняем access token под старым ключом для совместимости
-  } else if (data.token) { // Если есть поле token (например, так возвращает backend)
-    localStorage.setItem('token', data.token); // Сохраняем token под ключом 'token'
-    localStorage.setItem('accessToken', data.token); // Сохраняем token под старым ключом для совместимости
+export const setAuthData = (data) => { // Удаляем параметр rememberMe
+  const accessToken = data.access || data.token; // Получаем access token из разных полей ответа
+  if (accessToken) {
+    sessionStorage.setItem('token', accessToken); // Всегда сохраняем access token в sessionStorage
+    sessionStorage.setItem('accessToken', accessToken); // Сохраняем под старым ключом для совместимости
   }
   
-  if (data.refresh) { // Если есть поле refresh (refresh token)
-    localStorage.setItem('refreshToken', data.refresh); // Сохраняем refresh token
+  if (data.refresh) { 
+    localStorage.setItem('refreshToken', data.refresh); // Refresh токен всегда в localStorage
   }
   
-  if (data.user) { // Если есть информация о пользователе
-    localStorage.setItem('userData', JSON.stringify(data.user)); // Сохраняем данные пользователя в виде строки JSON
+  if (data.user) { 
+    sessionStorage.setItem('userData', JSON.stringify(data.user)); // Данные пользователя всегда в sessionStorage
   }
 };
 
 /**
- * Получить access токен из localStorage
+ * Получить access токен из sessionStorage
  * @returns {string|null} Access токен или null, если не найден
  */
-export const getToken = () => { // Экспортируемая функция для получения access token
-  let token = localStorage.getItem('token'); // Пытаемся получить токен по основному ключу
-  if (!token) { // Если не найден
-    token = localStorage.getItem('accessToken'); // Пробуем получить по старому ключу
+export const getToken = () => { // Проверяем только sessionStorage
+  let token = sessionStorage.getItem('token');
+  if (!token) { // Проверяем старый ключ для совместимости
+    token = sessionStorage.getItem('accessToken');
   }
-  return token; // Возвращаем токен или null
+  return token; 
 };
 
 /**
  * Получить refresh токен из localStorage
  * @returns {string|null} Refresh токен или null, если не найден
  */
-export const getRefreshToken = () => { // Экспортируемая функция для получения refresh token
-  return localStorage.getItem('refreshToken'); // Возвращаем refresh token или null
+export const getRefreshToken = () => { 
+  return localStorage.getItem('refreshToken'); // Refresh токен всегда из localStorage
 };
 
 /**
- * Получить сохранённые данные пользователя из localStorage
+ * Получить сохранённые данные пользователя из sessionStorage
  * @returns {Object|null} Объект с данными пользователя или null, если не найден
  */
-export const getUserData = () => { // Экспортируемая функция для получения данных пользователя
-  const userData = localStorage.getItem('userData'); // Получаем строку с данными пользователя
-  return userData ? JSON.parse(userData) : null; // Если есть строка - парсим JSON, иначе возвращаем null
+export const getUserData = () => { // Проверяем только sessionStorage
+  const userData = sessionStorage.getItem('userData');
+  return userData ? JSON.parse(userData) : null;
 };
 
 /**
  * Удалить все данные аутентификации из localStorage и sessionStorage
  */
-export const clearAuthData = () => { // Экспортируемая функция для очистки данных аутентификации
+export const clearAuthData = () => { // Очищаем оба хранилища (на всякий случай)
   // Очистить localStorage
-  localStorage.removeItem('token'); // Удаляем access token
-  localStorage.removeItem('refreshToken'); // Удаляем refresh token
-  localStorage.removeItem('userData'); // Удаляем данные пользователя
-  localStorage.removeItem('accessToken'); // Удаляем старый ключ access token для совместимости
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('userData');
+  localStorage.removeItem('accessToken');
 
   // Очистить sessionStorage
-  sessionStorage.removeItem('token'); // Удаляем access token из sessionStorage
-  sessionStorage.removeItem('refreshToken'); // Удаляем refresh token из sessionStorage
-  sessionStorage.removeItem('userData'); // Удаляем данные пользователя из sessionStorage
-  sessionStorage.removeItem('accessToken'); // Удаляем старый ключ access token из sessionStorage
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('refreshToken');
+  sessionStorage.removeItem('userData');
+  sessionStorage.removeItem('accessToken');
 };
 
 /**
@@ -149,8 +148,8 @@ export const executeRequestWithTokenRefresh = async (requestFn, navigate = null)
         console.log('Токен успешно обновлён'); // Логируем успех
 
         // Сохраняем новый access token
-        localStorage.setItem('token', data.access); // Сохраняем под основным ключом
-        localStorage.setItem('accessToken', data.access); // Сохраняем под старым ключом для совместимости
+        sessionStorage.setItem('token', data.access); // Сохраняем под основным ключом
+        sessionStorage.setItem('accessToken', data.access); // Сохраняем под старым ключом для совместимости
 
         // Повторяем исходный запрос с новым токеном
         console.log('Повтор запроса с новым токеном'); // Логируем повтор

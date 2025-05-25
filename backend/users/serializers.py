@@ -3,10 +3,36 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User  # Changed to import our custom User model
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    profile_photo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'has_pin')
-        read_only_fields = ('id', 'has_pin')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'has_pin', 'profile_photo', 'profile_photo_url')
+        read_only_fields = ('id', 'has_pin', 'profile_photo_url')
+
+    def get_profile_photo_url(self, obj):
+        if obj.profile_photo:
+            # Assuming your Django development server is running on localhost:8000
+            # and MEDIA_URL is set to '/media/'
+            request = self.context.get('request')
+            if request: # Check if request context is available
+                return request.build_absolute_uri(obj.profile_photo.url)
+            return obj.profile_photo.url # Fallback to relative URL if request is not available
+        return None
+
+    def update(self, instance, validated_data):
+        # Handle profile photo update separately if present
+        profile_photo = validated_data.pop('profile_photo', None)
+        if profile_photo is not None:
+            instance.profile_photo = profile_photo
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
