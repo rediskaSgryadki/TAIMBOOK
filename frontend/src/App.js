@@ -12,7 +12,7 @@ import EntryView from './pages/account/entries/EntryView';
 import EntriesList from './pages/account/entries/EntriesList';
 import Emotions from './pages/account/Emotions';
 import Profile from './pages/social/profile/Profile';
-import ProfileSettings from './pages/social/profile/ProfileSettings';
+import Settings from './pages/account/Settings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import UserAgreement from './pages/UserAgreement';
 import About from './pages/About';
@@ -34,7 +34,7 @@ function App() {
             <Route path="/account/new-entry" element={<EntryEditor />} />
             <Route path="/account/emotions" element={<Emotions />} />
             <Route path="/profile/:username" element={<Profile />} />
-            <Route path="/social/profile/settings" element={<ProfileSettings />} />
+            <Route path="/account/settings" element={<Settings />} />
           </Routes>
         </Router>
       </UserProvider>

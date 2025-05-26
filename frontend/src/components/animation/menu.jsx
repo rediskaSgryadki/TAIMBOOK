@@ -56,12 +56,13 @@ const SideMenu = () => {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link 
+                  to="/account/settings" 
+                  onClick={toggleMenu}
                   className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors dark:text-white"
                 >
                   Настройки
-                </a>
+                </Link>
               </li>
               <li>
                 <a 

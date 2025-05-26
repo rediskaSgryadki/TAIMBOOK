@@ -2,25 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 import AccountHeader from '../../../components/account/AccountHeader';
-import Footer from '../../../components/Footer';
 import axios from 'axios';
 import { checkTokenValidity, getUserData, getToken } from '../../../utils/authUtils';
-import Loader from '../../../components/Loader';
-import { AiOutlineFontSize, AiOutlineAlignLeft, AiOutlineAlignCenter, AiOutlineAlignRight, AiOutlineBold, AiOutlineUnderline, AiOutlineStrikethrough, AiOutlineUnorderedList, AiOutlineOrderedList, AiOutlineBgColors, AiOutlinePicture } from 'react-icons/ai';
-import { FiMapPin } from 'react-icons/fi';
 import { useTheme } from '../../../context/ThemeContext';
-
-const ALIGN_ICONS = {
-  left: <AiOutlineAlignLeft className="w-5 h-5 mx-auto" />,
-  center: <AiOutlineAlignCenter className="w-5 h-5 mx-auto" />,
-  right: <AiOutlineAlignRight className="w-5 h-5 mx-auto" />,
-};
+import { Editor } from '@tinymce/tinymce-react';
 
 // Constants for hashtag formatting
 const MAX_HASHTAG_LENGTH = 15;
 
 const EntryEditor = () => {
-  const contentRef = useRef(null);
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -42,30 +32,13 @@ const EntryEditor = () => {
   const [success, setSuccess] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
-  const [showAlignMenu, setShowAlignMenu] = useState(false);
-  const [showStyleMenu, setShowStyleMenu] = useState(false);
-  const [showListMenu, setShowListMenu] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const yandexApiKey = '27861ba2-1edf-4ada-9c93-c277cf2a043a';
   const mapRef = useRef(null);
   const { theme, isDarkMode } = useTheme();
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-
-  useEffect(() => {
-    // Устанавливаем курсор в конец при монтировании компонента
-    if (contentRef.current) {
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(contentRef.current);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      // Manually trigger input to update initial htmlContent state
-      handleTextChange({ target: contentRef.current });
-    }
-  }, []);
+  const editorRef = useRef(null);
 
   useEffect(() => {
     const userData = getUserData();
@@ -73,7 +46,6 @@ const EntryEditor = () => {
       navigate('/auth');
       return;
     }
-    // Check token validity but don't block loading if in edit mode
     if (!isEditMode) {
        checkTokenValidity(
         () => setLoading(false),
@@ -83,10 +55,9 @@ const EntryEditor = () => {
         }
       );
     } else {
-      // If in edit mode, token check will happen implicitly during fetchEntry
        checkTokenValidity(
-        () => {}, // Do nothing on success
-        (errorMsg) => { // Redirect on failure
+        () => {},
+        (errorMsg) => {
           setError(errorMsg);
           setTimeout(() => navigate('/auth'), 2000);
         }
@@ -119,20 +90,14 @@ const EntryEditor = () => {
           ...prev,
           title: data.title || '',
           content: data.content || '',
-          htmlContent: data.content || '', // Use data.content for htmlContent initially
+          htmlContent: data.content || '',
           location: data.location || null,
           date: data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           coverPreview: data.cover_image || null,
           coverImagePath: data.cover_image || null,
           hashtags: data.hashtags || '',
           isPublic: data.is_public || false,
-          // Style states are now managed by contentEditable DOM
         }));
-
-        // Set initial content in contentEditable div
-        if (contentRef.current) {
-           contentRef.current.innerHTML = data.content || '';
-        }
 
         if (data.location) {
           setMapCenter([data.location.latitude, data.location.longitude]);
@@ -146,66 +111,6 @@ const EntryEditor = () => {
     fetchEntry();
   }, [id, isEditMode, navigate]);
 
-  const handleTextChange = (e) => {
-    setEntry(prev => ({
-      ...prev,
-      content: e.target.innerText, // Keep plain text content if needed
-      htmlContent: e.target.innerHTML // This captures all formatting changes
-    }));
-  };
-
-  // Фокусировка редактора перед execCommand
-  const focusEditor = () => {
-    if (contentRef.current) {
-      contentRef.current.focus();
-    }
-  };
-
-  // Apply text formatting using execCommand
-  const applyFormat = (command, value = null) => {
-      focusEditor();
-      document.execCommand(command, false, value);
-      // Ensure state is updated after execCommand
-      handleTextChange({ target: contentRef.current });
-  };
-
-  // Text alignment using execCommand
-  const handleAlign = (align) => {
-    applyFormat(align === 'left' ? 'justifyLeft' : 
-                align === 'center' ? 'justifyCenter' : 
-                'justifyRight');
-    // Note: execCommand align might not work on all block elements or nested structures like tables.
-    // Table alignment might require different logic.
-  };
-
-  // Font size using execCommand (use HTML standard sizes 1-7)
-  const handleFontSizeChange = (size) => {
-     // Map pixel values to execCommand sizes (approximate)
-     const sizeMap = {
-       '14px': 3, // Default browser text size is often around 16px, corresponding to size 3
-       '16px': 3, 
-       '18px': 4,
-       '20px': 5,
-     };
-     applyFormat('fontSize', sizeMap[size] || 3);
-  };
-
-  // Toggle text style (bold, underline, strikethrough)
-  const toggleTextStyle = (style) => {
-     applyFormat(style);
-  };
-
-  // Apply list type (unordered or ordered)
-  const handleListType = (type) => {
-     applyFormat(type === 'unordered' ? 'insertUnorderedList' : 'insertOrderedList');
-  };
-
-  // Change text color
-  const handleColorChange = (color) => {
-    applyFormat('foreColor', color);
-  };
-
-  // Получить адрес по координатам (обратное геокодирование)
   const fetchAddressByCoords = async (coords) => {
     if (!yandexApiKey) return '';
     try {
@@ -219,7 +124,6 @@ const EntryEditor = () => {
     return '';
   };
 
-  // Поиск по адресу (с геокодированием и обратным геокодированием)
   const handleLocalSearchSubmit = async (e) => {
     if (e) e.preventDefault();
     setError('');
@@ -254,7 +158,6 @@ const EntryEditor = () => {
     }
   };
 
-  // Обработка клавиши Enter в поле поиска
   const handleLocalKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -266,7 +169,6 @@ const EntryEditor = () => {
     setLocalSearchQuery(e.target.value);
   };
 
-  // Клик по карте: сохраняем координаты и ищем адрес
   const handleMapClick = async (e) => {
     const coords = e.get('coords');
     let address = '';
@@ -282,7 +184,6 @@ const EntryEditor = () => {
       }
     }));
     setMapCenter(coords);
-    // Центрируем карту через ref, если возможно
     if (mapRef.current && mapRef.current.setCenter) {
       mapRef.current.setCenter(coords, 15, { duration: 300 });
     }
@@ -338,7 +239,6 @@ const EntryEditor = () => {
     setShowPreviewModal(true);
   };
 
-  // Новый метод для финального сохранения после предпросмотра
   const handleFinalSubmit = async () => {
     if (isUploading) return;
     setIsUploading(true);
@@ -354,15 +254,7 @@ const EntryEditor = () => {
 
       const formData = new FormData();
       formData.append('title', entry.title);
-      // Очищаем htmlContent от col-resizer
-      let htmlContent = entry.htmlContent;
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      tempDiv.querySelectorAll('.col-resizer').forEach(el => el.remove());
-      htmlContent = tempDiv.innerHTML;
-      formData.append('content', htmlContent);
-      formData.append('font_size', entry.fontSize);
-      formData.append('text_align', entry.textAlign);
+      formData.append('content', entry.htmlContent);
       if (entry.location) {
         formData.append('location[latitude]', entry.location.latitude);
         formData.append('location[longitude]', entry.location.longitude);
@@ -373,15 +265,11 @@ const EntryEditor = () => {
       } else if (entry.coverImagePath) {
         formData.append('cover_image', entry.coverImagePath);
       }
-      if (entry.listType) {
-        formData.append('list_type', entry.listType);
-      }
-      // Добавляем новые поля
       formData.append('hashtags', entry.hashtags);
       formData.append('is_public', entry.isPublic);
 
-      const url = isEditMode 
-        ? `http://localhost:8000/api/entries/${id}/` 
+      const url = isEditMode
+        ? `http://localhost:8000/api/entries/${id}/`
         : 'http://localhost:8000/api/entries/';
 
       const response = await fetch(url, {
@@ -409,7 +297,6 @@ const EntryEditor = () => {
     }
   };
 
-  // Функция для отображения короткого превью контента
   const getShortHtml = (html, maxLen = 150) => {
     if (!html) return '';
     const div = document.createElement('div');
@@ -422,7 +309,6 @@ const EntryEditor = () => {
     return html;
   };
 
-  // Функция для получения класса цвета хэштега в зависимости от длины
   const getHashtagColorClass = (tag) => {
     const length = tag.length;
     if (length <= MAX_HASHTAG_LENGTH / 3) return 'text-gray-800 dark:text-gray-200';
@@ -430,18 +316,15 @@ const EntryEditor = () => {
     return 'text-gray-400 dark:text-gray-500';
   };
 
-  // Преобразование строки хэштегов в массив и форматирование
   const formatHashtags = (hashtagsString) => {
     if (!hashtagsString) return [];
-    
+
     return hashtagsString.split(',')
       .map(tag => tag.trim())
       .filter(tag => tag)
       .map(tag => {
-        // Добавляем # если его нет
         if (!tag.startsWith('#')) tag = '#' + tag;
-        
-        // Обрезаем до MAX_HASHTAG_LENGTH
+
         if (tag.length > MAX_HASHTAG_LENGTH) {
           return tag.substring(0, MAX_HASHTAG_LENGTH) + '...';
         }
@@ -453,149 +336,8 @@ const EntryEditor = () => {
     <div className={`h-screen flex flex-col overflow-hidden ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}>
       <AccountHeader />
       <div className="flex flex-1 h-screen">
-        {/* Toolbar */}
-        <aside className="sticky top-0 left-0 h-screen w-20 flex-shrink-0 card flex flex-col items-center gap-2 py-4">
-          {/* Font size */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowFontSizeMenu(!showFontSizeMenu)}
-              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded transition"
-            >
-              <AiOutlineFontSize className="w-6 h-6" />
-            </button>
-            {showFontSizeMenu && (
-              <div className="absolute left-12 z-10 mt-1 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-2">
-                {/* Use pixel values in UI, map to execCommand sizes in handler */}
-                {[ '14px', '16px', '18px', '20px'].map(size => (
-                  <button
-                    key={size}
-                    type="button"
-                    // Call the new handler
-                    onClick={() => { handleFontSizeChange(size); setShowFontSizeMenu(false); }}
-                    className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {/* Align */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowAlignMenu(!showAlignMenu)}
-              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded"
-            >
-              {/* Display current alignment icon based on selection or container */}
-              {/* This requires more complex logic to determine current style; simplified for now */}
-              {ALIGN_ICONS.left}
-            </button>
-            {showAlignMenu && (
-              <div className="absolute left-12 z-10 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-2">
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('left'); setShowAlignMenu(false); }}
-                  className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                >
-                  {ALIGN_ICONS.left}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('center'); setShowAlignMenu(false); }}
-                  className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                >
-                  {ALIGN_ICONS.center}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('right'); setShowAlignMenu(false); }}
-                  className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                >
-                  {ALIGN_ICONS.right}
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Style */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowStyleMenu(!showStyleMenu)}
-              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded"
-            >
-              <AiOutlineBold className="w-5 h-5" />
-            </button>
-            {showStyleMenu && (
-              <div className="absolute left-12 z-10 mt-1 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-2">
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('bold'); setShowStyleMenu(false); }}
-                  className={`block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded ${entry.isBold ? 'font-bold' : ''}`}
-                >Жирный</button>
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('underline'); setShowStyleMenu(false); }}
-                  className={`block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded ${entry.isUnderline ? 'underline' : ''}`}
-                >Подчеркнутый</button>
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('strikeThrough'); setShowStyleMenu(false); }}
-                  className={`block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded ${entry.isStrikethrough ? 'line-through' : ''}`}
-                >Зачеркнутый</button>
-              </div>
-            )}
-          </div>
-          {/* List */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowListMenu(!showListMenu)}
-              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded"
-            >
-              <AiOutlineUnorderedList className="w-5 h-5" />
-            </button>
-            {showListMenu && (
-              <div className="absolute left-12 z-10 mt-1 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-2">
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('insertUnorderedList'); setShowListMenu(false); }}
-                  className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                >
-                  <AiOutlineUnorderedList className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { handleAlign('insertOrderedList'); setShowListMenu(false); }}
-                  className="block w-full text-left px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
-                >
-                  <AiOutlineOrderedList className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Color */}
-          <input
-            type="color"
-            onChange={e => handleColorChange(e.target.value)}
-            className="w-8 h-8 p-0 border-0 rounded cursor-pointer mt-2"
-          />
-          {/* Map button */}
-          <button
-            type="button"
-            onClick={() => setShowMap(true)}
-            className="mt-4 p-2 rounded transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700"
-            title="Указать местоположение"
-          >
-            <FiMapPin className="w-6 h-6" color={isDarkMode ? '#fff' : '#333'} />
-          </button>
-        </aside>
-
-        {/* Main form */}
         <main className="flex-1 flex flex-col px-10 py-10 fon">
           <div className="w-full flex flex-col">
-            {/* Первая строка: заголовок и дата */}
             <div className="flex items-end gap-4 mb-2">
               <div className="flex-1">
                 <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
@@ -624,7 +366,6 @@ const EntryEditor = () => {
                 />
               </div>
             </div>
-            {/* Местоположение: просто текст справа под заголовком */}
             <div className="flex justify-end mb-6">
               <div className="text-sm text-neutral-600 dark:text-neutral-300">
                 {entry.location && (entry.location.name || `${entry.location.latitude?.toFixed(4)}, ${entry.location.longitude?.toFixed(4)}`)}
@@ -645,22 +386,60 @@ const EntryEditor = () => {
                 <label htmlFor="content" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Содержание
                 </label>
-                <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-auto h-[50vh] dark:bg-neutral-800">
-                  <div
-                    ref={contentRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    onInput={handleTextChange}
-                    placeholder="Напишите здесь..."
-                    className="w-full h-full p-4 focus:outline-none bg-transparent dark:text-white"
-                    style={{ minHeight: '300px' }}
+                <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] dark:bg-neutral-800">
+                  <Editor
+                    apiKey='hb6tf9tq88ffck9vy5v59t7b2imro2k1dbdgdkxm9cnpypll'
+                    initialValue={entry.htmlContent}
+                    init={{
+                      height: '100%',
+                      menubar: false,
+                      plugins: [
+                        'advlist autolink lists link image charmap print preview anchor',
+                        'searchreplace visualblocks code fullscreen',
+                        'insertdatetime media table paste code help wordcount',
+                        'textcolor colorpicker',
+                        'table',
+                        'media'
+                      ],
+                      toolbar:
+                        'undo redo | formatselect | bold italic backcolor forecolor | ' +
+                        'alignleft aligncenter alignright alignjustify | ' +
+                        'bullist numlist outdent indent | removeformat | help fontselect fontsizeselect | mapButton | table media',
+                      fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+                      skin: isDarkMode ? 'oxide-dark' : 'oxide',
+                      content_css: isDarkMode ? 'dark' : 'default',
+                      color_picker_callback: function(callback) {
+                        callback('#FF0000');
+                      },
+                      setup: function(editor) {
+                        editor.ui.registry.addButton('mapButton', {
+                          text: 'Map',
+                          onAction: function() {
+                            setShowMap(true);
+                          }
+                        });
+                      },
+                      init_instance_callback: function (editor) {
+                        editorRef.current = editor;
+                        if (entry.htmlContent) {
+                          editor.setContent(entry.htmlContent);
+                        }
+                      }
+                    }}
+                    onEditorChange={(newContent, editor) => {
+                      // Update local state or handle changes internally within TinyMCE
+                      // Avoid frequent state updates here to prevent cursor issues
+                    }}
+                    onBlur={() => {
+                      // Update React state only when the editor loses focus
+                      if (editorRef.current) {
+                        setEntry(prev => ({
+                          ...prev,
+                          htmlContent: editorRef.current.getContent(),
+                        }));
+                      }
+                    }}
                   />
-                  <style>{`
-                     .col-resizer:hover { background: #60a5fa33; }
-                     .col-resizer { transition: background 0.2s; }
-                     table, .entry-editor-content table { border: 2px solid #444 !important; border-collapse: collapse !important; }
-                     table td, .entry-editor-content table td { border: 2px solid #444 !important; }
-                   `}</style>
                 </div>
               </div>
               <div>
@@ -781,7 +560,6 @@ const EntryEditor = () => {
         </div>
       )}
 
-      {/* Модальное окно предпросмотра */}
       {showPreviewModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-neutral-800 rounded-3xl p-6 w-full max-w-xl max-h-[90vh] overflow-auto">
@@ -797,7 +575,6 @@ const EntryEditor = () => {
               </button>
             </div>
 
-            {/* Предпросмотр карточки записи */}
             <div className="card shadow-md rounded-3xl flex flex-col p-6 relative overflow-hidden mb-4">
               {entry.coverPreview && (
                 <img
@@ -814,20 +591,19 @@ const EntryEditor = () => {
                   </p>
                 )}
               </div>
-              <div 
-                className="text-gray-600 dark:text-gray-300 mb-4"
-                dangerouslySetInnerHTML={{ __html: getShortHtml(entry.htmlContent, 150) }}
+              <div
+                className="text-gray-600 dark:text-gray-300 mb-4 entry-preview-content"
+                dangerouslySetInnerHTML={{ __html: entry.htmlContent }}
               />
-              
+
               <div className="flex justify-between items-center mt-auto">
                 <div className="flex items-center overflow-hidden flex-1 mr-3">
-                  {/* Хэштеги в строку с эффектом затухания */}
                   {formatHashtags(entry.hashtags).length > 0 && (
                     <div className="flex items-center overflow-hidden">
                       <div className="flex items-center flex-nowrap overflow-hidden">
                         {formatHashtags(entry.hashtags).map((tag, index) => (
-                          <span 
-                            key={index} 
+                          <span
+                            key={index}
                             className={`text-xs whitespace-nowrap mr-2 ${getHashtagColorClass(tag)}`}
                           >
                             {tag}
@@ -845,7 +621,6 @@ const EntryEditor = () => {
               </div>
             </div>
 
-            {/* Дополнительные поля для предпросмотра */}
             <div className="space-y-4 mb-6">
               <div>
                 <label className="text block text-sm">
@@ -862,7 +637,7 @@ const EntryEditor = () => {
                   Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
                 </p>
               </div>
-              
+
               <div className="flex items-center">
                 <input
                   id="is-public"

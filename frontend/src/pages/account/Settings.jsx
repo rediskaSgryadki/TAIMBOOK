@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import AccountHeader from '../../../components/account/AccountHeader'
+import AccountHeader from '../../components/account/AccountHeader'
 import axios from 'axios'
-import { getToken, setAuthData } from '../../../utils/authUtils'
-import { useTheme } from '../../../context/ThemeContext'
+import { getToken, setAuthData } from '../../utils/authUtils'
+import { useTheme } from '../../context/ThemeContext'
 
 const ProfileSettings = () => {
   const { themeFamily, isDarkMode, setThemeFamily } = useTheme();

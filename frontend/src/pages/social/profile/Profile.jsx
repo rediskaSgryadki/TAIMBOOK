@@ -64,7 +64,7 @@ const Profile = () => {
             <div className='space-x-10'>
                 <Link to="/account/new-entry" className='text'>Создать новую запись</Link>
                 <Link to="/account/entries" className='text'>Черновики</Link>
-                <Link to="/social/profile/settings" className='text'>Настройки профиля</Link>
+                <Link to="/account/settings" className='text'>Настройки профиля</Link>
             </div>
             <div>
                 <button className='text'>Сортировка
