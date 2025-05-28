@@ -58,7 +58,7 @@ const Profile = () => {
           ' dark:bg-neutral-800 rounded-full relative py-20 space-y-10'
         }>
             <img src="/img/Account/design _ idea, thought, mind, innovation, innovative, head.webp" alt="Фото профиля, которое пользователь может выбрать сам в настройках" className="w-20 border-2 rounded-full absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2" />
-            <p className='text-center text-neutral-900 dark:text-neutral-100 text-2xl zag'>{userData ? userData.username : 'Имя пользователя'}</p>
+            <p className='text-center text-2xl zag'>{userData ? userData.username : 'Имя пользователя'}</p>
         </div>
         <div className='px-20 flex justify-between'>
             <div className='space-x-10'>

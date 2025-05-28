@@ -202,29 +202,81 @@ const EntryEditor = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Размер изображения не должен превышать 5MB');
-      e.target.value = '';
-      return;
-    }
+    setError(''); // Clear previous errors
+    setIsUploading(true); // Indicate processing
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setEntry(prev => ({
-        ...prev,
-        coverImage: file,
-        coverPreview: reader.result
-      }));
-      setError('');
+    reader.onload = (readerEvent) => {
+      const originalDataUrl = readerEvent.target.result;
+      const img = new Image();
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const maxWidth = 1000; // Max width for resized image
+        const maxHeight = 1000; // Max height for resized image
+        let width = img.width;
+        let height = img.height;
+
+        // Resize image if it exceeds max dimensions
+        if (width > maxWidth || height > maxHeight) {
+          const aspectRatio = width / height;
+          if (width > height) {
+            width = maxWidth;
+            height = width / aspectRatio;
+          } else {
+            height = maxHeight;
+            width = height * aspectRatio;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw image on canvas
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Export canvas as JPEG with lower quality
+        // Use file.type for the format, fallback to 'image/jpeg'
+        const outputFormat = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const quality = 0.8; // Compression quality (0.0 to 1.0)
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            // Create a new File object from the blob
+            const compressedFile = new File([blob], file.name, { type: outputFormat, lastModified: Date.now() });
+
+            setEntry(prev => ({
+              ...prev,
+              coverImage: compressedFile, // Use the compressed file for upload
+              coverPreview: originalDataUrl // Use original Data URL for preview (or compressed Data URL if preferred)
+            }));
+          } else {
+            setError('Ошибка при сжатии изображения.');
+            setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
+          }
+          setIsUploading(false); // Processing finished
+        }, outputFormat, quality);
+      };
+
+      img.onerror = () => {
+        setError('Ошибка при загрузке изображения для сжатия.');
+        setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
+        setIsUploading(false); // Processing finished
+      };
+
+      img.src = originalDataUrl;
     };
 
     reader.onerror = () => {
-      setError('Ошибка при чтении файла');
+      setError('Ошибка при чтении файла изображения.');
       e.target.value = '';
+      setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
+      setIsUploading(false); // Processing finished
     };
 
     reader.readAsDataURL(file);
-    return;
   };
 
   const handleDateChange = (e) => {

@@ -26,8 +26,8 @@ const ProfileSettings = () => {
     { 
       name: 'SmokyGarden', 
       label: 'Дымчатый сад', 
-      lightColors: ['#c3dbd9', '#394c58', '#bfd397'],
-      darkColors: ['#5d7682', '#FFFFFF', '#869c68'] 
+      lightColors: ['#7db6eb', '#fffbe0', '#e8f4ff'],
+      darkColors: ['#336799', '#feffc2', '#c5e3ff'] 
     },
     { 
       name: 'BluePages', 
@@ -347,18 +347,18 @@ const ProfileSettings = () => {
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2">🌞</div>
                             <div className="flex">
-                              <div className="w-4 h-4 rounded-full mr-1" style={{ backgroundColor: theme.lightColors[0] }}></div>
-                              <div className="w-4 h-4 rounded-full mr-1" style={{ backgroundColor: theme.lightColors[1] }}></div>
-                              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: theme.lightColors[2] }}></div>
+                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.lightColors[0] }}></div>
+                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.lightColors[1] }}></div>
+                              <div className="w-4 h-4 rounded-full border border-black" style={{ backgroundColor: theme.lightColors[2] }}></div>
                             </div>
                           </div>
                           
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2">🌙</div>
                             <div className="flex">
-                              <div className="w-4 h-4 rounded-full mr-1" style={{ backgroundColor: theme.darkColors[0] }}></div>
-                              <div className="w-4 h-4 rounded-full mr-1" style={{ backgroundColor: theme.darkColors[1] }}></div>
-                              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: theme.darkColors[2] }}></div>
+                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.darkColors[0] }}></div>
+                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.darkColors[1] }}></div>
+                              <div className="w-4 h-4 rounded-full border border-black" style={{ backgroundColor: theme.darkColors[2] }}></div>
                             </div>
                           </div>
                         </div>

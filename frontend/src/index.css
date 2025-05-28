@@ -4,6 +4,13 @@ body {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.prose table,
+.prose th,
+.prose td {
+  border: 1px solid black !important;
+}
+
+
 @font-face {
   font-family: 'zag';
   src: url(../public/fonts/ARCO.ttf);
@@ -98,35 +105,33 @@ body {
 
 /* Smoky Garden Theme - Light */
 .SmokyGarden-light-theme{
-  background-color: #c3dbd9;
-  color: #394c58;
+  background-color: #7db6eb;
+  color: #303030;
   .card{
-    background-color: #e5e7e1;
+    background-color: #e8f4ff;
     color: #394c58;
   }
   .button{
-    background-color: #bfd397;
-    color: #394c58;
+    background-color: #fffbe0;
   }
   .fon {
-    background-color: #c3dbd9;
+    background-color: #7db6eb;
   }
 }
 
 /* Smoky Garden Theme - Dark */
 .SmokyGarden-dark-theme{
-  background-color: #5d7682;
-  color: white;
+  background-color: #336799;
+  color: #303030;
   .card{
-    background-color: #9a8e85;
-    color: white;
+    background-color: #c5e3ff;
   }
   .button{
-    background-color: #869c68;
+    background-color: #feffc2;
     color: white;
   }
   .fon {
-    background-color: #5d7682;
+    background-color: #336799;
   }
 }
 

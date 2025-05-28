@@ -44,13 +44,13 @@ const SideMenu = () => {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed top-0 right-0 h-screen w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 p-6"
           >
-            <h2 className="text-2xl font-bold mb-8 dark:text-white">Меню</h2>
+            <h2 className="text-2xl font-bold mb-8">Меню</h2>
             <ul className="space-y-4">
               <li>
                 <Link 
-                  to={`/profile/${userData.username}`} 
+                  to={`/profile/${userData?.username || ''}`} 
                   onClick={toggleMenu}
-                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors dark:text-white"
+                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   Мой профиль
                 </Link>
@@ -59,7 +59,7 @@ const SideMenu = () => {
                 <Link 
                   to="/account/settings" 
                   onClick={toggleMenu}
-                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors dark:text-white"
+                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   Настройки
                 </Link>
@@ -67,16 +67,16 @@ const SideMenu = () => {
               <li>
                 <a 
                   href="#" 
-                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors dark:text-white"
+                  className="block text-xl p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   Выйти
                 </a>
               </li>
             </ul>
-            <div className="absolute bottom-4 w-auto">
-              <div className="w-full p-20 rounded-3xl bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 zag">
+            <div className="absolute bottom-32 w-auto">
+              <Link to="/social" className="w-full p-20 rounded-3xl bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 zag">
                 Сообщество
-              </div>
+              </Link>
             </div>
           </motion.aside>
         )}

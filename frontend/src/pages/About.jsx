@@ -8,7 +8,7 @@ const About = () => {
     <>
     <div className="App min-h-screen ">
         <Header />
-        <div className='space-y-40'>
+        <div className='space-y-56'>
             <section className="relative h-[100vh] overflow-visible">
                 <img src="/img/Home/health _ zen, meditation, concentration, yoga, man, mental.webp" alt="" className="absolute w-[30vh] bottom-[50vh] right-[10vh] z-40"/>
                 <div className="relative h-full">
@@ -36,7 +36,7 @@ const About = () => {
             </FadeInSection>
 
             <FadeInSection>
-                <section className='grid grid-cols-2 gap-x-10 px-20 py-10'>
+                <section className='grid grid-cols-2 gap-x-10 px-20'>
                     <div className='flex justify-start'>
                         <img src="/img/Home/web development _ website, webpage, browser, customization, team, design.webp" className='w-[50vh]' alt="" />
                     </div>
@@ -45,13 +45,6 @@ const About = () => {
                             <p className='text font-semibold text-2xl text-justify'>Открытость, забота о пользователях и стремление к развитию - вот что лежит в основе ТАЙМБУК. Мы уделяем внимание деталям, чтобы сделать ваш опыт максимально простым и вдохновляющим</p>
                         </div>
                     </div>
-                </section>
-            </FadeInSection>
-
-            <FadeInSection>
-                <section className='flex flex-col gap-y-5'>
-                    <h2 className='zag text-4xl text-center'>Как это работает?</h2>
-                    <p className='text font-semibold text-2xl text-center'>В ТАЙМБУК вы можете вести записи, ставить цели, <br></br> отслеживать привычки и анализировать прогресс. <br></br>Все инструменты интуитивно понятны и доступны с любого устройства.</p>
                 </section>
             </FadeInSection>
 

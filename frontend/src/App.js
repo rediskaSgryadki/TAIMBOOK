@@ -16,7 +16,7 @@ import Settings from './pages/account/Settings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import UserAgreement from './pages/UserAgreement';
 import About from './pages/About';
-
+import Social from './pages/social/social';
 function App() {
   return (
     <ThemeProvider>
@@ -35,6 +35,7 @@ function App() {
             <Route path="/account/emotions" element={<Emotions />} />
             <Route path="/profile/:username" element={<Profile />} />
             <Route path="/account/settings" element={<Settings />} />
+            <Route path="/social" element={<Social />} />
           </Routes>
         </Router>
       </UserProvider>

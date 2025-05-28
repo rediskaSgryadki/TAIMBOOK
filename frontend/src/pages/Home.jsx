@@ -13,7 +13,7 @@ const Home = () => {
     <>
       <div className="App min-h-screen">
         <Header />
-        <div className='space-y-40'>
+        <div className='space-y-56'>
             <section className="relative h-[100vh] overflow-visible">
                 <img src="/img/Home/health _ zen, meditation, concentration, yoga, man, mental.webp" alt="" className="absolute w-[30vh] bottom-[50vh] right-[10vh] z-40"/>
                 <div className="relative h-full">
@@ -51,7 +51,7 @@ const Home = () => {
                                 <circle r="15.9" cx="50%" cy="50%" fill="none" stroke="#ffc7ec" strokeWidth="10" strokeDasharray="30 70" strokeDashoffset="70" />
                             </svg>
                             <div className='space-y-5'>
-                                <p className='zag text-4xl'>Отслеживайте своё настроение</p>
+                                <p className='zag text-4xl tracking-widest'>Отслеживайте своё настроение</p>
                                 <p className='text text-xl'>Смотри график эмоций за день, неделю и месяц</p>
                             </div>
                         </div>
@@ -63,7 +63,7 @@ const Home = () => {
                                 <line x1="16" y1="3" x2="14" y2="21" />
                             </svg>
                             <div className='space-y-5'>
-                                <p className='zag text-4xl'>Ищите свои записи и записи сообщества по хэштегам</p>
+                                <p className='zag text-4xl tracking-widest'>Ищите свои записи и записи сообщества по хэштегам</p>
                                 <p className='text text-xl'>Смотри график эмоций за день, неделю и месяц</p>
                             </div>
                         </div>
@@ -78,7 +78,7 @@ const Home = () => {
                                 <line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
                             <div className='space-y-5'>
-                                <p className='zag text-4xl'>Ищите свои записи по дате</p>
+                                <p className='zag text-4xl tracking-widest'>Ищите свои записи по дате</p>
                                 <p className='text text-xl'>Смотри график эмоций за день, неделю и месяц</p>
                             </div>
                         </div>
@@ -89,7 +89,7 @@ const Home = () => {
                                 <line x1="12" y1="8" x2="12" y2="16" />
                             </svg>
                             <div className='space-y-5'>
-                                <p className='zag text-4xl'>Ищите свои записи и записи сообщества по хэштегам</p>
+                                <p className='zag text-4xl tracking-widest'>Ищите свои записи и записи сообщества по хэштегам</p>
                                 <p className='text text-xl'>Смотри график эмоций за день, неделю и месяц</p>
                             </div>
                         </div>
@@ -99,14 +99,14 @@ const Home = () => {
             </FadeInSection>
 
             <FadeInSection>
-                <section className='py-40 flex flex-col gap-y-5'>
+                <section className='flex flex-col gap-y-5'>
                     <h2 className='zag text-4xl text-center'>Ваши данные под надежной защитой</h2>
                     <p className='text font-semibold text-2xl text-center'>Мы обеспечиваем высокий уровень безопасности, <br></br>шифруя все данные и защищая вашу информацию от посторонних.</p>
                 </section>
             </FadeInSection>
 
             <FadeInSection>
-                <section className='grid grid-cols-2 gap-x-10 px-20 py-10'>
+                <section className='grid grid-cols-2 gap-x-10 px-20'>
                     <div className='flex justify-center items-center'>
                         <div className='w-1/2'>
                             <p className='text font-semibold text-2xl text-justify'>Установите короткий PIN-код для защиты своего дневника. Эта функция позволяет быстро и надежно ограничить доступ к вашим записям, сохраняя конфиденциальность личной информации.</p>
@@ -119,7 +119,7 @@ const Home = () => {
             </FadeInSection>
 
             <FadeInSection>
-                <section className='grid grid-cols-2 gap-x-10 px-20 py-10'>
+                <section className='grid grid-cols-2 gap-x-10 px-20'>
                     <div className='flex justify-start'>
                         <img src="/img/Home/communication, social media _ confirm, share, sharing, image, photo, picture, checkmark.webp" className='w-[50vh]' alt="" />
                     </div>
