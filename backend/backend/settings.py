@@ -79,7 +79,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': env.db(
         default=None,
-        ssl_require=True
     )
 }
 
