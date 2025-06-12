@@ -93,7 +93,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # CORS_ALLOWED_ORIGINS — список из переменной окружения
 CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ALLOWED_ORIGINS',
-    default=['taimbook.vercel.app']
+    default=['https://taimbook.vercel.app']
 )
 
 CORS_ALLOW_CREDENTIALS = True
