@@ -15,9 +15,15 @@ const Comments = () => {
     const fetchReviews = async () => {
       try {
         const response = await axios.get('/api/reviews/');
-        setReviews(response.data);
+        if (Array.isArray(response.data)) {
+          setReviews(response.data);
+        } else {
+          console.error('Некорректный формат данных отзывов:', response.data);
+          setReviews([]);
+        }
       } catch (error) {
         console.error('Error fetching reviews:', error);
+        setReviews([]);
       }
     };
     
@@ -51,7 +57,7 @@ const Comments = () => {
     <div className="container flex flex-col mx-auto items-end space-y-20 px-4 py-8">
       {/* Reviews Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto max-h-[500px]">
-        {reviews.map((review, index) => (
+        {Array.isArray(reviews) ? reviews.map((review, index) => (
           <div 
             key={index} 
             className="bg-white dark:bg-neutral-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
@@ -75,7 +81,9 @@ const Comments = () => {
               })}
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="col-span-full text-red-600 dark:text-red-400">Ошибка загрузки отзывов</div>
+        )}
       </div>
 
       {/* Add Review Button */}
