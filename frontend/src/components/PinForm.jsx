@@ -1,8 +1,8 @@
 const token = localStorage.getItem('accessToken');
 console.log('Token for PIN verification:', token ? 'Token exists' : 'No token');
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 try {
-  const response = await axios.post(`${API_URL}/api/users/verify-pin/`, { pin }, {
+  const response = await axios.post(`${API_BASE_URL}/api/users/verify-pin/`, { pin }, {
     headers: { Authorization: `Bearer ${token}` }
   });
 } catch (error) {

@@ -6,7 +6,7 @@ import { getToken, clearAuthData } from '../../../utils/authUtils';
 
 const MAX_CONTENT_LENGTH = 180;
 const MAX_HASHTAG_LENGTH = 15;
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const EntriesList = () => {
   const [searchParams] = useSearchParams();
@@ -60,7 +60,7 @@ const EntriesList = () => {
         }
 
         console.log('Fetching entries for date:', date);
-        const response = await fetch(`${API_URL}/api/entries/by_date/?date=${date}`, {
+        const response = await fetch(`${API_BASE_URL}/api/entries/by_date/?date=${date}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getToken } from '../../../utils/authUtils';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const PinForm = ({ onSuccess }) => {
   const [pin, setPin] = useState(['', '', '', '']);
@@ -57,7 +57,7 @@ const PinForm = ({ onSuccess }) => {
         }, 2000);
         return;
       }
-      const response = await axios.post(`${API_URL}/api/users/verify-pin/`, { pin_code: pinString }, {
+      const response = await axios.post(`${API_BASE_URL}/api/users/verify-pin/`, { pin_code: pinString }, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

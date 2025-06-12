@@ -11,7 +11,7 @@ const EntryPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedEntry, setEditedEntry] = useState(null);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchEntry = async () => {
@@ -22,7 +22,7 @@ const EntryPage = () => {
           return;
         }
 
-        const response = await fetch(`${API_URL}/api/entries/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/entries/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -57,7 +57,7 @@ const EntryPage = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/entries/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/entries/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,7 @@ import AccountMenu from '../../components/account/AccountMenu';
 import { useMovingBg } from '../../utils/movingBg';
 
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const Emotions = () => {
   const { user } = useUser();
@@ -36,7 +36,7 @@ const Emotions = () => {
       setUpdatingCharts(true);
 
       await executeRequestWithTokenRefresh(async () => {
-        const response = await fetch(`${API_URL}/api/emotions/`, {
+        const response = await fetch(`${API_BASE_URL}/api/emotions/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${getToken()}`,
@@ -69,7 +69,7 @@ const Emotions = () => {
       const fetchPeriodStats = async (period) => {
         try {
           const response = await executeRequestWithTokenRefresh(async () => {
-            const res = await fetch(`${API_URL}/api/emotions/stats/${period}/`, {
+            const res = await fetch(`${API_BASE_URL}/api/emotions/stats/${period}/`, {
               headers: {
                 'Authorization': `Bearer ${getToken()}`
               }
@@ -104,7 +104,7 @@ const Emotions = () => {
   const fetchCurrentMonthStats = async () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
-        const res = await fetch(`${API_URL}/api/emotions/stats/current_month/`, {
+        const res = await fetch(`${API_BASE_URL}/api/emotions/stats/current_month/`, {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) throw new Error('Failed to fetch current month stats');
@@ -123,7 +123,7 @@ const Emotions = () => {
   const fetchAllTimeStats = async () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
-        const res = await fetch(`${API_URL}/api/emotions/stats/all_time/`, {
+        const res = await fetch(`${API_BASE_URL}/api/emotions/stats/all_time/`, {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) throw new Error('Failed to fetch all time stats');
@@ -142,7 +142,7 @@ const Emotions = () => {
   const fetchLastMonthStats = async () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
-        const res = await fetch(`${API_URL}/api/emotions/stats/last_month/`, {
+        const res = await fetch(`${API_BASE_URL}/api/emotions/stats/last_month/`, {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) throw new Error('Failed to fetch last month stats');

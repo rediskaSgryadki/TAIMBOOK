@@ -12,7 +12,7 @@ import AccountMenu from '../../components/account/AccountMenu';
 import { useMovingBg } from '../../utils/movingBg';
 
 // Base API URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 // Импортируем все изображения из папки covers
 const coverImages = [
@@ -54,7 +54,7 @@ const AccountHome = () => {
     try {
       const token = getToken();
       // Direct call to user details to check PIN status
-      const response = await axios.get(`${API_URL}/api/users/me/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -146,7 +146,7 @@ const AccountHome = () => {
         return;
       }
 
-        const response = await axios.get(`${API_URL}/api/users/me/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -217,7 +217,7 @@ const AccountHome = () => {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/api/entries/last/`, {
+      const response = await axios.get(`${API_BASE_URL}/api/entries/last/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',

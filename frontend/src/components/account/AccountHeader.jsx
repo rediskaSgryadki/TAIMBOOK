@@ -3,7 +3,7 @@ import { getToken, getUserData } from '../../utils/authUtils';
 import AccountThemeToggle from './AccountThemeToggle';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const AccountHeader = () => {
   const [user, setUser] = useState(null);
@@ -21,7 +21,7 @@ const AccountHeader = () => {
           return;
         }
 
-        const response = await axios.get(`${API_URL}/api/users/me/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -48,7 +48,7 @@ const AccountHeader = () => {
           <div className='user-info flex gap-x-2 lg:gap-x-5 items-center'>
             {user?.profile_photo_url ? (
               <img 
-                src={`${API_URL}${user.profile_photo_url}`} 
+                src={`${API_BASE_URL}${user.profile_photo_url}`} 
                 alt="Profile" 
                 className="w-10 h-10 rounded-full object-cover"
               />

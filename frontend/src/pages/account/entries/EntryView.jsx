@@ -19,7 +19,7 @@ const EntryView = () => {
   const [loading, setLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState([55.75, 37.57]);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   // Функция для получения класса цвета хэштега в зависимости от длины
   const getHashtagColorClass = (tag) => {
@@ -77,7 +77,7 @@ const EntryView = () => {
           return;
         }
 
-        const response = await fetch(`${API_URL}/api/entries/${id}/`, {
+        const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -124,7 +124,7 @@ const EntryView = () => {
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/entries/${id}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

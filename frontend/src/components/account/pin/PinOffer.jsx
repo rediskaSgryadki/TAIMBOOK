@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { getToken } from '../../../utils/authUtils';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const PinOffer = ({ onClose, onDontRemind }) => {
   const [pin, setPin] = useState(['', '', '', '']);
@@ -47,7 +47,7 @@ const PinOffer = ({ onClose, onDontRemind }) => {
     try {
       const token = getToken();
       const pinString = pin.join('');
-      const response = await axios.post(`${API_URL}/api/users/set-pin/`, {
+      const response = await axios.post(`${API_BASE_URL}/api/users/set-pin/`, {
         pin_code: pinString,
         confirm_pin: pinString
       }, {
@@ -66,7 +66,7 @@ const PinOffer = ({ onClose, onDontRemind }) => {
   const handleDontRemind = async () => {
     try {
       const token = getToken();
-      await axios.post(`${API_URL}/api/users/dont-remind-pin/`, {}, {
+      await axios.post(`${API_BASE_URL}/api/users/dont-remind-pin/`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       onDontRemind();

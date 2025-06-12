@@ -3,7 +3,8 @@ import axios from 'axios';
 import ReviewFormModal from './ReviewFormModal';
 import { filterBadWords } from '../utils/filterBadWords';
 
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 
@@ -27,7 +28,7 @@ const Comments = () => {
   const handleSubmitReview = async (reviewData) => {
     try {
       console.log('Sending review data:', reviewData);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000'}/api/reviews/`, {
+      const response = await axios.post(`${API_BASE_URL}/api/reviews/`, {
         author: reviewData.author,
         text: filterBadWords(reviewData.text),
         rating: parseInt(reviewData.rating)

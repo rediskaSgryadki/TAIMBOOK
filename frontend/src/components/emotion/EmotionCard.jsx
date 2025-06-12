@@ -9,7 +9,7 @@ import { useUser } from '../../context/UserContext';
 // Register Chart.js elements
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const EmotionCard = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ const EmotionCard = () => {
     try {
       setError('');
       const response = await executeRequestWithTokenRefresh(async () => {
-        const res = await fetch(`${API_URL}/api/emotions/stats/day/`, {
+        const res = await fetch(`${API_BASE_URL}/api/emotions/stats/day/`, {
           headers: {
             'Authorization': `Bearer ${getToken()}`
           }
@@ -57,7 +57,7 @@ const EmotionCard = () => {
       console.log('Request payload:', requestData);
       
       await executeRequestWithTokenRefresh(async () => {
-        const response = await fetch(`${API_URL}/api/emotions/`, {
+        const response = await fetch(`${API_BASE_URL}/api/emotions/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

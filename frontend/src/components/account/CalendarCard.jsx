@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { getToken, clearAuthData } from '../../utils/authUtils';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const CalendarCard = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const CalendarCard = () => {
         navigate('/auth');
         return;
       }
-      const response = await fetch(`${API_URL}/api/entries/`, {
+      const response = await fetch(`${API_BASE_URL}/api/entries/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -70,7 +70,7 @@ const CalendarCard = () => {
       const formattedDate = `${year}-${month}-${day}`;
       console.log('Fetching entries for date:', formattedDate);
       
-      const response = await fetch(`${API_URL}/api/entries/by_date/?date=${formattedDate}`, {
+      const response = await fetch(`${API_BASE_URL}/api/entries/by_date/?date=${formattedDate}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',

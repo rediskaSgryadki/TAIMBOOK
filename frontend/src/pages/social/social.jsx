@@ -15,12 +15,12 @@ const Social = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000'
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/entries/public/`, {
+        const response = await fetch(`${API_BASE_URL}/api/entries/public/`, {
           headers: {
             Accept: 'application/json',
           },

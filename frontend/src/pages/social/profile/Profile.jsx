@@ -8,7 +8,7 @@ import UserPosts from '../../../components/social/UserPosts'
 import axios from 'axios'
 import { getToken } from '../../../utils/authUtils'
 
-
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const Profile = () => {
   const userData = getUserData();
@@ -31,7 +31,7 @@ const Profile = () => {
           return;
         }
 
-        const response = await axios.get(`${API_URL}/api/users/me/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -47,8 +47,6 @@ const Profile = () => {
     
     fetchUserData();
   }, []); // Empty dependency array means this runs once on mount
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
   const { ref: welcomeRef, mousePosition, handleMouseMove, handleMouseLeave } = useMovingBg();
 
@@ -86,7 +84,7 @@ const Profile = () => {
       if (userData?.id) {
         try {
           setLoading(true);
-          const response = await fetch(`${API_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
+          const response = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
           
           if (!response.ok) {
             throw new Error('Failed to fetch public entries');
@@ -149,7 +147,7 @@ const Profile = () => {
           <div className='user-info flex gap-x-2 lg:gap-x-5 items-center'>
             {user?.profile_photo_url ? (
               <img 
-                src={`${API_URL}${user.profile_photo_url}`} 
+                src={`${API_BASE_URL}${user.profile_photo_url}`} 
                 alt="Profile" 
                 className="w-20 h-20 rounded-full object-cover"
               />

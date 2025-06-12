@@ -4,6 +4,8 @@ import { getToken, checkTokenValidity, redirectToAuth } from '../../utils/authUt
 import { filterBadWords } from '../../utils/filterBadWords';
 import { Link } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
 const UserPosts = ({ post }) => {
   const [showFullCover, setShowFullCover] = useState(false)
   const [fullCoverUrl, setFullCoverUrl] = useState('')
@@ -26,7 +28,7 @@ const UserPosts = ({ post }) => {
 
   const fetchLikeCount = async (postId) => {
     try {
-      const res = await axios.get(`/api/like/${postId}/count/`)
+      const res = await axios.get(`${API_BASE_URL}/api/like/${postId}/count/`)
       setLikes(res.data.count)
     } catch {}
   }
@@ -42,7 +44,7 @@ const UserPosts = ({ post }) => {
       return;
     }
     try {
-      const res = await axios.post(`/api/like/${postId}/toggle/`, {}, {
+      const res = await axios.post(`${API_BASE_URL}/api/like/${postId}/toggle/`, {}, {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       setLikes(res.data.count)
@@ -60,7 +62,7 @@ const UserPosts = ({ post }) => {
   const fetchComments = async (postId) => {
     setCommentsLoading(true)
     try {
-      const res = await axios.get(`/api/comments/${postId}/`)
+      const res = await axios.get(`${API_BASE_URL}/api/comments/${postId}/`)
       setComments(res.data)
     } catch {}
     setCommentsLoading(false)
@@ -81,7 +83,7 @@ const UserPosts = ({ post }) => {
       return;
     }
     try {
-      await axios.post(`/api/comments/${postId}/`, { text: filtered }, {
+      await axios.post(`${API_BASE_URL}/api/comments/${postId}/`, { text: filtered }, {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       setCommentText('')

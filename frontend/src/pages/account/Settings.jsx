@@ -81,7 +81,7 @@ const ProfileSettings = () => {
   const [showPinCodeNew, setShowPinCodeNew] = useState(false);
   const [showPinCodeNewConfirm, setShowPinCodeNewConfirm] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const toggleSection = (section) => {
     if (activeSection === section) {
@@ -112,7 +112,7 @@ const ProfileSettings = () => {
           return;
         }
 
-        const response = await axios.get(`${API_URL}/api/users/me/`, {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -153,7 +153,7 @@ const ProfileSettings = () => {
       const formData = new FormData();
       formData.append('username', name);
       
-      const response = await axios.patch(`${API_URL}/api/users/me/`, formData, {
+      const response = await axios.patch(`${API_BASE_URL}/api/users/me/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -185,7 +185,7 @@ const ProfileSettings = () => {
         formData.append('profile_photo', profilePhoto);
       }
       
-      const response = await axios.patch(`${API_URL}/api/users/me/`, formData, {
+      const response = await axios.patch(`${API_BASE_URL}/api/users/me/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -193,7 +193,7 @@ const ProfileSettings = () => {
       });
       setUserData(response.data);
       // Update photo preview with the new URL from the response
-      setPhotoPreview(response.data.profile_photo_url ? `${API_URL}${response.data.profile_photo_url}` : '');
+      setPhotoPreview(response.data.profile_photo_url ? `${API_BASE_URL}${response.data.profile_photo_url}` : '');
       // Update user data in localStorage after successful photo update
       setAuthData({ user: response.data });
       setSuccessMessage('Фото профиля успешно обновлено');
@@ -220,7 +220,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      await axios.post(`${API_URL}/api/users/change-password/`, {
+      await axios.post(`${API_BASE_URL}/api/users/change-password/`, {
         old_password: oldPassword,
         new_password: newPassword
       }, {
@@ -253,7 +253,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      await axios.post(`${API_URL}/api/users/verify-pin/`, {
+      await axios.post(`${API_BASE_URL}/api/users/verify-pin/`, {
         pin_code: pinOld
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -284,7 +284,7 @@ const ProfileSettings = () => {
       formData.append('old_pin', pinOld);
       formData.append('pin_code', pinCodeNew);
       formData.append('confirm_pin', pinCodeNewConfirm);
-      await axios.post(`${API_URL}/api/users/set-pin/`, formData, {
+      await axios.post(`${API_BASE_URL}/api/users/set-pin/`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

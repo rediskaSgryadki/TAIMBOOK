@@ -5,7 +5,7 @@ import AccountMenu from '../../components/account/AccountMenu'
 import { useMovingBg } from '../../utils/movingBg'
 import UserPosts from '../../components/social/UserPosts'
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const UserProfile = () => {
   const { username } = useParams();
@@ -21,12 +21,12 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/users/by_username/?username=${encodeURIComponent(username)}`);
+        const response = await fetch(`${API_BASE_URL}/api/users/by_username/?username=${encodeURIComponent(username)}`);
         if (!response.ok) throw new Error('Ошибка загрузки пользователя');
         const userData = await response.json();
         setUser(userData);
         // Теперь загрузим записи
-        const entriesRes = await fetch(`${API_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
+        const entriesRes = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
         if (!entriesRes.ok) throw new Error('Ошибка загрузки записей');
         setPublicEntries(await entriesRes.json());
       } catch (err) {
@@ -103,7 +103,7 @@ const UserProfile = () => {
             <div className='user-info flex gap-x-2 lg:gap-x-5 items-center'>
               {user?.profile_photo_url ? (
                 <img 
-                  src={`${API_URL}${user.profile_photo_url}`} 
+                  src={`${API_BASE_URL}${user.profile_photo_url}`} 
                   alt="Profile" 
                   className="w-20 h-20 rounded-full object-cover"
                 />

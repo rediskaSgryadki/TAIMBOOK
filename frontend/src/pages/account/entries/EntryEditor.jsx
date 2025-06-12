@@ -44,7 +44,7 @@ const EntryEditor = () => {
   const [showBadWordsModal, setShowBadWordsModal] = useState(false);
   const [badWordsDetected, setBadWordsDetected] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const userData = getUserData();
@@ -80,7 +80,7 @@ const EntryEditor = () => {
           navigate('/auth');
           return;
         }
-        const response = await fetch(`${API_URL}/api/entries/${id}/`, {
+        const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -326,8 +326,8 @@ const EntryEditor = () => {
       formData.append('is_public', entry.isPublic);
 
       const url = isEditMode
-        ? `${API_URL}/api/entries/${id}/`
-        : `${API_URL}/api/entries/`;
+        ? `${API_BASE_URL}/api/entries/${id}/`
+        : `${API_BASE_URL}/api/entries/`;
 
       const response = await fetch(url, {
         method: isEditMode ? 'PUT' : 'POST',
