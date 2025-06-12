@@ -5,16 +5,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EntrySerializer(serializers.ModelSerializer):
-    author = serializers.SerializerMethodField()  # Добавляем поле автора
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = Entry
         fields = [
-            'id', 'title', 'content', 'html_content', 'text_color', 
+            'id', 'title', 'content', 'text_color',
             'font_size', 'text_align', 'is_bold', 'is_underline', 
             'is_strikethrough', 'list_type', 'location', 'cover_image', 
             'date', 'created_at', 'updated_at', 'hashtags', 'is_public',
-            'author'  # Не забудь добавить это поле
+            'author'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -28,14 +28,15 @@ class EntrySerializer(serializers.ModelSerializer):
             else:
                 photo_url = user.profile_photo.url
         return {
+            'id': user.id,
+            'username': user.username,
             'name': user.username,
             'photo': photo_url
         }
 
     def create(self, validated_data):
         try:
-            logger.debug(f"Entry data: {validated_data}")
-            validated_data.pop('html_content', None)
+            logger.debug(f"Entry create validated_data: {validated_data}")
             return Entry.objects.create(**validated_data)
         except Exception as e:
             logger.error(f"Error creating entry: {str(e)}")
@@ -54,6 +55,8 @@ class EntrySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if 'html_content' in representation and not representation['html_content']:
-            representation['html_content'] = instance.content
+
+        # ❗ УДАЛИ вот это, если хочешь, чтобы `content` возвращался на фронт
+        # representation.pop('content', None)
+
         return representation

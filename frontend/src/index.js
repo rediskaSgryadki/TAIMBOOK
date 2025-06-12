@@ -4,9 +4,10 @@ import axios from 'axios';
 import './index.css';
 import App from './App';
 import { getToken, clearAuthData } from './utils/authUtils';
+import ErrorBoundary from './ErrorBoundary';
 
 // Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 axios.defaults.headers.common['Accept'] = 'application/json';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
@@ -48,6 +49,8 @@ if (savedStandardTheme === 'dark') {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );

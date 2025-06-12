@@ -11,6 +11,8 @@ const EntryPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedEntry, setEditedEntry] = useState(null);
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+
   useEffect(() => {
     const fetchEntry = async () => {
       try {
@@ -20,7 +22,7 @@ const EntryPage = () => {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/entries/${id}`, {
+        const response = await fetch(`${API_URL}/api/entries/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -55,7 +57,7 @@ const EntryPage = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/entries/${id}`, {
+      const response = await fetch(`${API_URL}/api/entries/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +159,7 @@ const EntryPage = () => {
             </button>
           </div>
           <div className="prose dark:prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+            <div dangerouslySetInnerHTML={{ __html: entry.htmlContent || entry.content }} />
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
             Created: {new Date(entry.createdAt).toLocaleString()}

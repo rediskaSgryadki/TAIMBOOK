@@ -11,10 +11,12 @@ const MonthChart = ({ data }) => {
   };
 
   return (
-    <div className="rounded-3xl p-8 flex flex-col h-full">
+    <div className="rounded-3xl flex flex-col h-full min-h-[32vh] sm:min-h-[40vh] md:min-h-[50vh]">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Эмоции за месяц</h2>
-        <span className="text-sm text-gray-500 dark:text-gray-400">Месяц</span>
+        {data.month && (
+          <span className="text-sm text-gray-500 ml-2">{data.month}</span>
+        )}
       </div>
       <div className="flex-1">
         <Pie
@@ -26,6 +28,30 @@ const MonthChart = ({ data }) => {
               legend: {
                 display: false,
               },
+              tooltip: {
+                displayColors: false,
+                callbacks: {
+                  label: function(context) {
+                    let label = context.label || '';
+                    // Add emoji based on label
+                    let emoji = '';
+                    if (label.includes('Радость')) {
+                      emoji = '😃 ';
+                    } else if (label.includes('Грусть')) {
+                      emoji = '☹️ ';
+                    } else if (label.includes('Нейтральный')) {
+                      emoji = '😐 ';
+                    }
+                    
+                    label = emoji + label;
+
+                    if (context.parsed !== null) {
+                      label += ': ' + context.parsed;
+                    }
+                    return label;
+                  }
+                }
+              }
             },
           }}
         />

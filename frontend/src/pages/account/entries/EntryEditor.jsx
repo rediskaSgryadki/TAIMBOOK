@@ -6,6 +6,9 @@ import axios from 'axios';
 import { checkTokenValidity, getUserData, getToken } from '../../../utils/authUtils';
 import { useTheme } from '../../../context/ThemeContext';
 import { Editor } from '@tinymce/tinymce-react';
+import { filterBadWords, hasBadWords } from '../../../utils/filterBadWords';
+import LastEntryCard from '../../../components/account/LastEntryCard';
+import AccountMenu from '../../../components/account/AccountMenu';
 
 // Constants for hashtag formatting
 const MAX_HASHTAG_LENGTH = 15;
@@ -18,7 +21,6 @@ const EntryEditor = () => {
   const [entry, setEntry] = useState({
     title: '',
     content: '',
-    htmlContent: '',
     location: null,
     date: searchParams.get('date') || new Date().toISOString().split('T')[0],
     coverImage: null,
@@ -39,6 +41,10 @@ const EntryEditor = () => {
   const { theme, isDarkMode } = useTheme();
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const editorRef = useRef(null);
+  const [showBadWordsModal, setShowBadWordsModal] = useState(false);
+  const [badWordsDetected, setBadWordsDetected] = useState(false);
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
   useEffect(() => {
     const userData = getUserData();
@@ -74,7 +80,7 @@ const EntryEditor = () => {
           navigate('/auth');
           return;
         }
-        const response = await fetch(`http://localhost:8000/api/entries/${id}/`, {
+        const response = await fetch(`${API_URL}/api/entries/${id}/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -90,7 +96,6 @@ const EntryEditor = () => {
           ...prev,
           title: data.title || '',
           content: data.content || '',
-          htmlContent: data.content || '',
           location: data.location || null,
           date: data.created_at ? new Date(data.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           coverPreview: data.cover_image || null,
@@ -247,8 +252,8 @@ const EntryEditor = () => {
             // Create a new File object from the blob
             const compressedFile = new File([blob], file.name, { type: outputFormat, lastModified: Date.now() });
 
-            setEntry(prev => ({
-              ...prev,
+      setEntry(prev => ({
+        ...prev,
               coverImage: compressedFile, // Use the compressed file for upload
               coverPreview: originalDataUrl // Use original Data URL for preview (or compressed Data URL if preferred)
             }));
@@ -305,11 +310,11 @@ const EntryEditor = () => {
       }
 
       const formData = new FormData();
-      formData.append('title', entry.title);
-      formData.append('content', entry.htmlContent);
+      formData.append('title', filterBadWords(entry.title));
+      formData.append('content', filterBadWords(editorRef.current?.getContent() || ''));
+  
       if (entry.location) {
-        formData.append('location[latitude]', entry.location.latitude);
-        formData.append('location[longitude]', entry.location.longitude);
+        formData.append('location', JSON.stringify(entry.location));
       }
       formData.append('date', entry.date);
       if (entry.coverImage) {
@@ -321,8 +326,8 @@ const EntryEditor = () => {
       formData.append('is_public', entry.isPublic);
 
       const url = isEditMode
-        ? `http://localhost:8000/api/entries/${id}/`
-        : 'http://localhost:8000/api/entries/';
+        ? `${API_URL}/api/entries/${id}/`
+        : `${API_URL}/api/entries/`;
 
       const response = await fetch(url, {
         method: isEditMode ? 'PUT' : 'POST',
@@ -348,6 +353,7 @@ const EntryEditor = () => {
       setShowPreviewModal(false);
     }
   };
+  
 
   const getShortHtml = (html, maxLen = 150) => {
     if (!html) return '';
@@ -384,11 +390,20 @@ const EntryEditor = () => {
       });
   };
 
+  // Проверка на нецензурные слова при изменении контента
+  const handleEditorChange = (content, editor) => {
+    if (hasBadWords(content)) {
+      setBadWordsDetected(true);
+      setShowBadWordsModal(true);
+    }
+  };
+
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${theme === 'dark' ? 'dark-theme' : 'light-theme'}`}>
+    <div className="h-screen flex flex-col">
       <AccountHeader />
+      <AccountMenu/>
       <div className="flex flex-1 h-screen">
-        <main className="flex-1 flex flex-col px-10 py-10 fon">
+        <main className="flex-1 flex flex-col px-7 py-10 lg:px-10 fon shadow-[inset_0px_0px_12px_-5px_rgba(0,_0,_0,_0.8)]">
           <div className="w-full flex flex-col">
             <div className="flex items-end gap-4 mb-2">
               <div className="flex-1">
@@ -399,7 +414,7 @@ const EntryEditor = () => {
                   type="text"
                   id="title"
                   value={entry.title}
-                  onChange={e => setEntry(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
                   className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
                   required
                 />
@@ -423,11 +438,6 @@ const EntryEditor = () => {
                 {entry.location && (entry.location.name || `${entry.location.latitude?.toFixed(4)}, ${entry.location.longitude?.toFixed(4)}`)}
               </div>
             </div>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
             {success && (
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
                 {success}
@@ -438,34 +448,68 @@ const EntryEditor = () => {
                 <label htmlFor="content" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Содержание
                 </label>
-                <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] dark:bg-neutral-800">
+              <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
                   <Editor
-                    apiKey='hb6tf9tq88ffck9vy5v59t7b2imro2k1dbdgdkxm9cnpypll'
-                    initialValue={entry.htmlContent}
+                    tinymceScriptSrc="/tinymce/tinymce.min.js"
+                    // apiKey='hb6tf9tq88ffck9vy5v59t7b2imro2k1dbdgdkxm9cnpypll'
+                    initialValue={entry.content}
                     init={{
+                      base_url: '/tinymce',
+                      language_url: '/tinymce/langs/ru.js',
+                      language: 'ru',
+                      skin_url: isDarkMode ? '/tinymce/skins/ui/tinymce-5-dark' : '/tinymce/skins/ui/tinymce-5',
+                      content_css: isDarkMode ? '/tinymce/skins/content/dark/content.min.css' : '/tinymce/skins/content/default/content.min.css',
+                      suffix: '.min',
+                      external_plugins: {
+                        accordion: '/tinymce/plugins/accordion/plugin.min.js',
+                        advlist: '/tinymce/plugins/advlist/plugin.min.js',
+                        autolink: '/tinymce/plugins/autolink/plugin.min.js',
+                        lists: '/tinymce/plugins/lists/plugin.min.js',
+                        link: '/tinymce/plugins/link/plugin.min.js',
+                        image: '/tinymce/plugins/image/plugin.min.js',
+                        charmap: '/tinymce/plugins/charmap/plugin.min.js',
+                        preview: '/tinymce/plugins/preview/plugin.min.js',
+                        anchor: '/tinymce/plugins/anchor/plugin.min.js',
+                        searchreplace: '/tinymce/plugins/searchreplace/plugin.min.js',
+                        visualblocks: '/tinymce/plugins/visualblocks/plugin.min.js',
+                        fullscreen: '/tinymce/plugins/fullscreen/plugin.min.js',
+                        insertdatetime: '/tinymce/plugins/insertdatetime/plugin.min.js',
+                        media: '/tinymce/plugins/media/plugin.min.js',
+                        help: '/tinymce/plugins/help/plugin.min.js',
+                        wordcount: '/tinymce/plugins/wordcount/plugin.min.js',
+                        emoticons: '/tinymce/plugins/emoticons/plugin.min.js',
+                        table: '/tinymce/plugins/table/plugin.min.js',
+                      },
                       height: '100%',
                       menubar: false,
+                      branding: false,
                       plugins: [
-                        'advlist autolink lists link image charmap print preview anchor',
-                        'searchreplace visualblocks code fullscreen',
-                        'insertdatetime media table paste code help wordcount',
-                        'textcolor colorpicker',
-                        'table',
-                        'media'
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+                        'searchreplace', 'visualblocks', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount',
+                        'emoticons'
                       ],
                       toolbar:
-                        'undo redo | formatselect | bold italic backcolor forecolor | ' +
-                        'alignleft aligncenter alignright alignjustify | ' +
-                        'bullist numlist outdent indent | removeformat | help fontselect fontsizeselect | mapButton | table media',
-                      fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
-                      skin: isDarkMode ? 'oxide-dark' : 'oxide',
-                      content_css: isDarkMode ? 'dark' : 'default',
-                      color_picker_callback: function(callback) {
-                        callback('#FF0000');
-                      },
+                        'undo redo | formatselect | bold italic backcolor | ' +
+                        'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | emoticons | link image media table mapButton | fullscreen | help',
+                      content_style: isDarkMode
+                        ? 'body { background-color: #262626; color: #fff; overflow-y: auto !important; }'
+                        : 'body { background-color: #fff; color: #222; overflow-y: auto !important; }',
+                      help_tabs: ['shortcuts', 'keyboardnav'],
+                      statusbar: false,
                       setup: function(editor) {
+                        editor.on('Change KeyUp', (e) => {
+                          const content = editor.getContent({ format: 'text' });
+                          if (hasBadWords(content)) {
+                            setBadWordsDetected(true);
+                            setShowBadWordsModal(true);
+                          }
+                        });
+                        // Register the custom map icon
+                        editor.ui.registry.addIcon('customMapIcon', '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">\n  <path \n    fill-rule="evenodd" \n    d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.5.5 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103M10 1.91l-4-.8v12.98l4 .8zm1 12.98 4-.8V1.11l-4 .8zm-6-.8V1.11l-4 .8v12.98z"\n    stroke="currentColor"\n    stroke-width="0.8"\n    stroke-linejoin="round"\n  />\n</svg>');
+
                         editor.ui.registry.addButton('mapButton', {
-                          text: 'Map',
+                          icon: 'customMapIcon',
                           onAction: function() {
                             setShowMap(true);
                           }
@@ -473,62 +517,10 @@ const EntryEditor = () => {
                       },
                       init_instance_callback: function (editor) {
                         editorRef.current = editor;
-                        if (entry.htmlContent) {
-                          editor.setContent(entry.htmlContent);
-                        }
-                      }
+                      },
                     }}
-                    onEditorChange={(newContent, editor) => {
-                      // Update local state or handle changes internally within TinyMCE
-                      // Avoid frequent state updates here to prevent cursor issues
-                    }}
-                    onBlur={() => {
-                      // Update React state only when the editor loses focus
-                      if (editorRef.current) {
-                        setEntry(prev => ({
-                          ...prev,
-                          htmlContent: editorRef.current.getContent(),
-                        }));
-                      }
-                    }}
+                    onEditorChange={handleEditorChange}
                   />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                  Обложка
-                </label>
-                <div className="flex items-center space-x-4">
-                  <div className="w-32 h-32 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                    {entry.coverPreview ? (
-                      <img
-                        src={entry.coverPreview}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block">
-                      <span className="sr-only">Выберите изображение</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCoverImageChange}
-                        className="block w-full text-sm text-neutral-500 dark:text-neutral-400
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-indigo-50 file:text-indigo-700
-                          dark:file:bg-indigo-900 dark:file:text-indigo-300
-                          hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
-                      />
-                    </label>
-                  </div>
                 </div>
               </div>
               <div className="flex justify-end space-x-4 mt-auto">
@@ -613,7 +605,7 @@ const EntryEditor = () => {
       )}
 
       {showPreviewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:text-white">
           <div className="bg-white dark:bg-neutral-800 rounded-3xl p-6 w-full max-w-xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="zag text-xl">Сохранение записи</h2>
@@ -627,53 +619,13 @@ const EntryEditor = () => {
               </button>
             </div>
 
-            <div className="card shadow-md rounded-3xl flex flex-col p-6 relative overflow-hidden mb-4">
-              {entry.coverPreview && (
-                <img
-                  src={entry.coverPreview}
-                  alt={entry.title}
-                  className="w-full h-48 object-cover rounded-t-xl"
-                />
-              )}
-              <div className="flex items-center justify-between mb-2 mt-2">
-                <h2 className="text-2xl font-bold">{entry.title}</h2>
-                {entry.location && (
-                  <p className="text-gray-500 dark:text-gray-400">
-                    <span className="text-gray-400 dark:text-gray-500">📍</span> {entry.location.name || `${entry.location.latitude?.toFixed(2) ?? ''}, ${entry.location.longitude?.toFixed(2) ?? ''}`}
-                  </p>
-                )}
-              </div>
-              <div
-                className="text-gray-600 dark:text-gray-300 mb-4 entry-preview-content"
-                dangerouslySetInnerHTML={{ __html: entry.htmlContent }}
-              />
+            <LastEntryCard entry={{
+              ...entry,
+              created_at: entry.date,
+              content: editorRef.current?.getContent() || entry.content,
+            }} onMore={() => setShowPreviewModal(false)} />
 
-              <div className="flex justify-between items-center mt-auto">
-                <div className="flex items-center overflow-hidden flex-1 mr-3">
-                  {formatHashtags(entry.hashtags).length > 0 && (
-                    <div className="flex items-center overflow-hidden">
-                      <div className="flex items-center flex-nowrap overflow-hidden">
-                        {formatHashtags(entry.hashtags).map((tag, index) => (
-                          <span
-                            key={index}
-                            className={`text-xs whitespace-nowrap mr-2 ${getHashtagColorClass(tag)}`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center flex-shrink-0">
-                  <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">
-                    {new Date(entry.date).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-6">
+            <div className="space-y-4 mb-6 mt-6">
               <div>
                 <label className="text block text-sm">
                   Хэштеги
@@ -690,6 +642,44 @@ const EntryEditor = () => {
                 </p>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                  Обложка
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-32 h-32 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
+                    {entry.coverPreview ? (
+                      <img
+                        src={entry.coverPreview}
+                        alt="Cover preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block">
+                      <span className="sr-only">Выберите изображение</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverImageChange}
+                        className="block w-full text-sm text-neutral-500 dark:text-neutral-400
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-indigo-50 file:text-indigo-700
+                          dark:file:bg-indigo-900 dark:file:text-indigo-300
+                          hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center">
                 <input
                   id="is-public"
@@ -703,12 +693,6 @@ const EntryEditor = () => {
                 </label>
               </div>
             </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
 
             <div className="flex justify-end space-x-4">
               <button
@@ -726,6 +710,31 @@ const EntryEditor = () => {
               >
                 {isUploading ? 'Сохранение...' : (isEditMode ? 'Сохранить изменения' : 'Создать запись')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBadWordsModal && (
+        <div className="fixed inset-0 px-7 lg:px-0 flex items-center justify-center bg-black bg-opacity-50 z-[100]" style={{ zIndex: 2147483647 }}>
+          <div className="lg:w-1/2 card p-10 shadow-xl rounded-3xl grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <img src="/img/Account/error, 404 _ dinosaur, animal, danger, warning, predator, dangerous, run away.webp" className='block lg:hidden' alt="" />
+            <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center gap-y-10">
+                <h3 className="zag tracking-wider text-3xl text-center">Это Валера. За плохие слова его съел динозавр🥲</h3>
+                <p className="text text-xl text-center">Пожалуйста, избегайте использования нежелательных слов, чтобы не оказаться на месте Валеры.</p>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <button
+                  onClick={() => setShowBadWordsModal(false)}
+                  className="bg-[var(--color-green)] text font-bold px-6 py-3 rounded-md hover:bg-opacity-90 transition-all shadow-md"
+                >
+                  Понятно
+                </button>
+              </div>
+            </div>
+            <div>
+              <img src="/img/Account/error, 404 _ dinosaur, animal, danger, warning, predator, dangerous, run away.webp" className='hidden lg:block' alt="" />
             </div>
           </div>
         </div>

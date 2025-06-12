@@ -77,6 +77,7 @@ body {
   color: #393e46;
   .card{
     background-color: rgb(241, 241, 241);
+    color: #393e46;
   }
   .button{
     background-color: #4ade80;
@@ -103,140 +104,6 @@ body {
   }
 }
 
-/* Smoky Garden Theme - Light */
-.SmokyGarden-light-theme{
-  background-color: #7db6eb;
-  color: #303030;
-  .card{
-    background-color: #e8f4ff;
-    color: #394c58;
-  }
-  .button{
-    background-color: #fffbe0;
-  }
-  .fon {
-    background-color: #7db6eb;
-  }
-}
-
-/* Smoky Garden Theme - Dark */
-.SmokyGarden-dark-theme{
-  background-color: #336799;
-  color: #303030;
-  .card{
-    background-color: #c5e3ff;
-  }
-  .button{
-    background-color: #feffc2;
-    color: white;
-  }
-  .fon {
-    background-color: #336799;
-  }
-}
-
-/* Blue Pages Theme - Light */
-.BluePages-light-theme{
-  background-color: #c4e0f3;
-  color: #2c4b66;
-  .card{
-    background-color: #d9e6f2;
-    color: #2c4b66;
-  }
-  .button{
-    background-color: #cad9bc;
-    color: #2c4b66;
-  }
-  .fon {
-    background-color: #c4e0f3;
-  }
-}
-
-/* Blue Pages Theme - Dark */
-.BluePages-dark-theme{
-  background-color: #2a537a;
-  color: white;
-  .card{
-    background-color: #677f8f;
-    color: white;
-  }
-  .button{
-    background-color: #a3b287;
-    color: white;
-  }
-  .fon {
-    background-color: #2a537a;
-  }
-}
-
-/* Midnight Entries Theme - Light */
-.MidnightEntries-light-theme{
-  background-color: #abbccd;
-  color: #2b313c;
-  .card{
-    background-color: #7fb7d5;
-    color: #2b313c;
-  }
-  .button{
-    background-color: #f9dece;
-    color: #2b313c;
-  }
-  .fon {
-    background-color: #abbccd;
-  }
-}
-
-/* Midnight Entries Theme - Dark */
-.MidnightEntries-dark-theme{
-  background-color: #2e3240;
-  color: white;
-  .card{
-    background-color: #214d62;
-    color: white;
-  }
-  .button{
-    background-color: #e5b9a0;
-    color: #2b313c;
-  }
-  .fon {
-    background-color: #2e3240;
-  }
-}
-
-/* Pastel Entries Theme - Light */
-.PastelEntries-light-theme{
-  background-color: #d9daec;
-  color: #5d5e6f;
-  .card{
-    background-color: #fdf0db;
-    color: #5d5e6f;
-  }
-  .button{
-    background-color: #e1d7ca;
-    color: #5d5e6f;
-  }
-  .fon {
-    background-color: #d9daec;
-  }
-}
-
-/* Pastel Entries Theme - Dark */
-.PastelEntries-dark-theme{
-  background-color: #7a7b8f;
-  color: white;
-  .card{
-    background-color: #ebc283;
-    color: #4a4a52;
-  }
-  .button{
-    background-color: #bdb3a6;
-    color: #4a4a52;
-  }
-  .fon {
-    background-color: #7a7b8f;
-  }
-}
-
 .emotions-welcome-bg {
   background-image: url('../public/img/Account/04.05.2025 0_56_53.png');
   background-size: cover;
@@ -252,6 +119,30 @@ body {
   background-repeat: no-repeat;
   position: relative;
   overflow: hidden;
+}
+.profile-welcome-bg {
+  background-image: url('../public/img/Account/11.06.2025\ 18_57_59.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+.tox-fullscreen {
+  /* Убираем скролл и паддинги у body */
+  padding: 0 !important;
+  margin: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+}
+body.tox-fullscreen-active {
+  overflow: hidden !important;
 }
 
 .emotion-button {

@@ -5,6 +5,8 @@ import AccountHeader from '../../../components/account/AccountHeader';
 import Footer from '../../../components/Footer';
 import { checkTokenValidity, getUserData, getToken, clearAuthData } from '../../../utils/authUtils';
 import Loader from '../../../components/Loader';
+import { filterBadWords } from '../../../utils/filterBadWords';
+import AccountMenu from '../../../components/account/AccountMenu';
 
 // Константа для хэштегов
 const MAX_HASHTAG_LENGTH = 15;
@@ -16,6 +18,8 @@ const EntryView = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState([55.75, 37.57]);
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
   // Функция для получения класса цвета хэштега в зависимости от длины
   const getHashtagColorClass = (tag) => {
@@ -73,7 +77,7 @@ const EntryView = () => {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/entries/${id}/`, {
+        const response = await fetch(`${API_URL}/api/entries/${id}/`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -104,7 +108,7 @@ const EntryView = () => {
   }, [id, navigate]);
 
   const handleEdit = () => {
-    navigate(`/account/entry/${id}/edit`);
+    navigate(`/account/entries/${id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -120,7 +124,7 @@ const EntryView = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/entries/${id}/`, {
+      const response = await fetch(`${API_URL}/api/entries/${id}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -173,21 +177,21 @@ const EntryView = () => {
   return (
     <div className="min-h-screen">
       <AccountHeader />
-      <div className='w-full space-y-10 h-screen mt-12 px-20'>
-        <div className='flex gap-10'>
+      <AccountMenu/>
+      <div className='w-full space-y-10 h-screen mt-12 px-7 md:px-20'>
+        <div className='flex   gap-10'>
           {entry.cover_image && (
             <img src={entry.cover_image} alt={entry.title} className='h-[30vh] rounded-lg' />
           )}
           <div className='space-y-6 w-full'>
             <p className='zag text-6xl m-auto'>
-              {entry.title}
+              {filterBadWords(entry.title)}
             </p>
             
             {/* Хэштеги с эффектом затухания */}
             {hashtagsList.length > 0 && (
               <div className="mb-2 overflow-hidden">
                 <div className="flex flex-wrap items-center">
-                  <p className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">Хэштеги:</p>
                   <div className="flex flex-wrap">
                     {hashtagsList.map((tag, index) => (
                       <span 
@@ -202,7 +206,7 @@ const EntryView = () => {
               </div>
             )}
             
-            <div className='flex justify-between w-full'>
+            <div className='flex flex-col gap-y-10 md:flex-row justify-center md:justify-between w-full'>
               <div className="flex items-center">
                 <p className='text text-xl'>
                   {new Date(entry.created_at).toLocaleString()}
@@ -213,25 +217,48 @@ const EntryView = () => {
                   </span>
                 )}
               </div>
-              <p className='text text-xl'>
-                {entry.location ? `${entry.location.latitude}, ${entry.location.longitude}` : 'Нет местоположения'}
-              </p>
+              <div className='flex flex-col items-start md:items-end'>
+                {entry.location ? (
+                  <>
+                    <p className='text text-sm md:text-xl'>
+                      {entry.location.name
+                        ? <span>📍 {entry.location.name}</span>
+                        : <span>Координаты: {entry.location.latitude}, {entry.location.longitude}</span>
+                      }
+                    </p>
+                    {entry.location.latitude && entry.location.longitude && (
+                      <div className='w-full max-w-xs h-40 mt-2 rounded-xl overflow-hidden border border-gray-300'>
+                        <YMaps>
+                          <Map
+                            defaultState={{ center: [entry.location.latitude, entry.location.longitude], zoom: 13 }}
+                            width="100%"
+                            height="100%"
+                          >
+                            <Placemark geometry={[entry.location.latitude, entry.location.longitude]} />
+                          </Map>
+                        </YMaps>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className='text text-xl'>Нет местоположения</p>
+                )}
+              </div>
             </div>
             <div className='flex justify-end gap-x-10 items-end'>
-              <button onClick={handleEdit} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+              <button onClick={() => navigate(`/account/entries/${id}/edit`)} className="px-4 py-2 bg-[var(--color-green)] text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Редактировать
               </button>
-              <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              <button onClick={handleDelete} className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-700 transition-colors">
                 Удалить
               </button>
             </div>
           </div>
         </div>
-        <div className='w-full h-[50vh] overflow-y-auto overflow-x-hidden'>
+        <div className='w-full overflow-x-hidden text-black dark:text-white'>
           <div
-            className="prose dark:prose-invert max-w-none overflow-y-auto overflow-x-hidden p-5 bg-neutral-300 dark:bg-neutral-800 rounded-xl"
+            className="prose dark:prose-invert max-w-none overflow-y-auto overflow-x-hidden px-5 py-20 border-t-4 border-black dark:border-white"
             style={{
-              color: entry.text_color || '#222222',
               fontSize: entry.font_size || '16px',
               textAlign: entry.text_align || 'left',
               fontWeight: entry.is_bold ? 'bold' : 'normal',
@@ -241,7 +268,7 @@ const EntryView = () => {
               whiteSpace: 'pre-wrap',
             }}
           dangerouslySetInnerHTML={{
-            __html: entry.html_content || entry.content || ''
+            __html: filterBadWords(entry.html_content || entry.content || '')
           }}
           />
         </div>

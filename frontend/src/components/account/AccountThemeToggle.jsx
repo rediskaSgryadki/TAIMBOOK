@@ -12,11 +12,7 @@ const AccountThemeToggle = () => {
   return (
     <button
       onClick={handleToggle}
-      className={`p-2 rounded-full focus:outline-none border transition-colors duration-200 ${
-        isDarkMode 
-          ? 'bg-gray-800 hover:bg-gray-700 border-gray-600' 
-          : 'bg-gray-200 hover:bg-gray-300 border-gray-300'
-      }`}
+      className={`p-2 rounded-full focus:outline-none transition-colors duration-200`}
       aria-label="Toggle theme"
     >
       {isDarkMode ? (

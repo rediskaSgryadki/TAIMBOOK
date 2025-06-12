@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 from .models import Emotion
 from .serializers import EmotionSerializer
@@ -8,6 +8,8 @@ from datetime import timedelta
 from users.models import User  # Импортируем пользовательскую модель напрямую
 import logging
 import traceback
+from django.db.models import Count
+from django.db.models.functions import TruncMonth
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
@@ -110,4 +112,75 @@ class EmotionViewSet(viewsets.ModelViewSet):
             'neutral': emotions.filter(emotion_type='neutral').count()
         }
         
+        return Response(stats)
+
+    def get_monthly_stats(self, request):
+        user = request.user
+        # Получаем эмоции за последние 12 месяцев
+        now = timezone.now()
+        year_ago = now.replace(day=1) - timedelta(days=365)
+        emotions = Emotion.objects.filter(user=user, timestamp__gte=year_ago)
+        # Группируем по месяцу и типу эмоции
+        monthly = (
+            emotions
+            .annotate(month=TruncMonth('timestamp'))
+            .values('month', 'emotion_type')
+            .annotate(count=Count('id'))
+            .order_by('month')
+        )
+        # Собираем данные по месяцам
+        from calendar import month_name
+        from collections import defaultdict
+        stats_by_month = defaultdict(lambda: {'joy': 0, 'sadness': 0, 'neutral': 0})
+        for row in monthly:
+            month = row['month']
+            emotion_type = row['emotion_type']
+            count = row['count']
+            stats_by_month[month][emotion_type] = count
+        # Формируем список для фронта
+        result = []
+        for month in sorted(stats_by_month.keys()):
+            m = month
+            result.append({
+                'month': m.strftime('%Y-%m'),
+                'month_name': m.strftime('%b %Y'),
+                'joy': stats_by_month[m]['joy'],
+                'sadness': stats_by_month[m]['sadness'],
+                'neutral': stats_by_month[m]['neutral'],
+            })
+        return Response(result)
+
+    def get_last_month_stats(self, request):
+        user = self.request.user
+        emotions = Emotion.objects.filter(user=user)
+        monthly = (
+            emotions
+            .annotate(month=TruncMonth('timestamp'))
+            .values('month', 'emotion_type')
+            .annotate(count=Count('id'))
+            .order_by('-month')
+        )
+        from collections import defaultdict
+        stats_by_month = defaultdict(lambda: {'joy': 0, 'sadness': 0, 'neutral': 0})
+        for row in monthly:
+            month = row['month']
+            emotion_type = row['emotion_type']
+            count = row['count']
+            stats_by_month[month][emotion_type] = count
+        if stats_by_month:
+            last_month = max(stats_by_month.keys())
+            stats = stats_by_month[last_month]
+            stats['month'] = last_month.strftime('%B %Y')
+            return Response(stats)
+        else:
+            return Response({'joy': 0, 'sadness': 0, 'neutral': 0, 'month': None})
+
+    def get_all_time_stats(self, request):
+        user = request.user
+        emotions = Emotion.objects.filter(user=user)
+        stats = {
+            'joy': emotions.filter(emotion_type='joy').count(),
+            'sadness': emotions.filter(emotion_type='sadness').count(),
+            'neutral': emotions.filter(emotion_type='neutral').count()
+        }
         return Response(stats)

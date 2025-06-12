@@ -2,11 +2,11 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 const ThemeToggle = () => {
-  const { standardTheme, toggleStandardTheme } = useTheme();
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   const handleToggle = () => {
-    console.log("Toggling theme from", standardTheme);
-    toggleStandardTheme();
+    console.log("Toggling theme from", isDarkMode ? 'dark' : 'light');
+    toggleDarkMode();
   };
 
   return (
@@ -15,7 +15,7 @@ const ThemeToggle = () => {
       className="p-2 rounded-full focus:outline-none border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
       aria-label="Toggle theme"
     >
-      {standardTheme === 'dark' ? (
+      {isDarkMode ? (
         // Sun icon for dark mode (switch to light)
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
@@ -46,4 +46,4 @@ const ThemeToggle = () => {
   );
 };
 
-export default ThemeToggle; 
+export default ThemeToggle;

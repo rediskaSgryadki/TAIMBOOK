@@ -5,7 +5,6 @@ class Entry(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='entries')
     title = models.CharField(max_length=200, default='Без названия')
     content = models.TextField(default='')  # Простой текст для поиска
-    html_content = models.TextField(default='')  # HTML-разметка для отображения
     text_color = models.CharField(max_length=7, default='#000000')  # Цвет текста в формате HEX
     font_size = models.CharField(max_length=10, default='16px')  # Размер шрифта
     text_align = models.CharField(max_length=10, default='left')  # Выравнивание текста

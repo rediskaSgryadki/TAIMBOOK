@@ -3,8 +3,9 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, isSameMonth, is
 import { ru } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import Joyride, { STATUS } from 'react-joyride';
 import { getToken, clearAuthData } from '../../utils/authUtils';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
 const CalendarCard = () => {
   const navigate = useNavigate();
@@ -13,8 +14,8 @@ const CalendarCard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [runTour, setRunTour] = useState(true);
-  const [showTourButton, setShowTourButton] = useState(true);
+  const [showMonthSelect, setShowMonthSelect] = useState(false);
+  const [showYearSelect, setShowYearSelect] = useState(false);
 
   const fetchEvents = async () => {
     try {
@@ -25,7 +26,7 @@ const CalendarCard = () => {
         navigate('/auth');
         return;
       }
-      const response = await fetch('http://localhost:8000/api/entries/', {
+      const response = await fetch(`${API_URL}/api/entries/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -51,8 +52,6 @@ const CalendarCard = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
-  const [showMonthSelect, setShowMonthSelect] = useState(false);
-  const [showYearSelect, setShowYearSelect] = useState(false);
 
   const handleDateSelect = async (date) => {
     setLoading(true);
@@ -71,7 +70,7 @@ const CalendarCard = () => {
       const formattedDate = `${year}-${month}-${day}`;
       console.log('Fetching entries for date:', formattedDate);
       
-      const response = await fetch(`http://localhost:8000/api/entries/by_date/?date=${formattedDate}`, {
+      const response = await fetch(`${API_URL}/api/entries/by_date/?date=${formattedDate}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -92,7 +91,7 @@ const CalendarCard = () => {
       setEvents(data);
       
       if (data && data.length > 0) {
-        navigate(`/account/EntriesList?date=${formattedDate}`);
+        navigate(`/account/entries?date=${formattedDate}`);
       }
     } catch (err) {
       console.error('Error fetching entries:', err);
@@ -123,8 +122,8 @@ const CalendarCard = () => {
         <button
           key={day}
           onClick={() => handleDateSelect(date)}
-          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm
-            ${isToday ? 'bg-[var(--color-green)] text-white' : 'px-4 py-2 bg-primary text-white rounded-full hover:bg-primary-dark'}
+          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm hover:bg-[var(--color-green)] hover:text-white
+            ${isToday ? 'bg-[var(--color-green)] text-white' : 'px-4 py-2 bg-primary text-black dark:text-white rounded-full hover:bg-primary-dark'}
             transition-colors`}
         >
           {day}
@@ -154,63 +153,24 @@ const CalendarCard = () => {
     setShowYearSelect(false);
   };
 
-  const tourSteps = [
-    {
-      target: '.calendar-header',
-      content: 'Здесь вы можете выбрать месяц и год для просмотра записей',
-      placement: 'bottom'
-    },
-  ];
-
-  const handleJoyrideCallback = (data) => {
-    const { status, type } = data;
-    
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      setRunTour(false);
-    }
-  };
-
-  const startTour = () => {
-    setRunTour(true);
-  };
-
   return (
-    <div className="card shadow-md rounded-3xl p-6 h-[55vh]">
-      <Joyride
-        callback={handleJoyrideCallback}
-        continuous
-        run={runTour}
-        steps={tourSteps}
-        showSkipButton
-        styles={{
-          options: {
-            zIndex: 10000,
-            primaryColor: '#4ade80',
-            backgroundColor: '#1e293b',
-            textColor: '#f8fafc',
-            borderRadius: '12px',
-            overlayColor: 'rgba(0, 0, 0, 0.5)',
-            width: '300px',
-            height: 'auto'
-          }
-        }}
-      />
-      <div className="flex justify-between items-center mb-6 calendar-header">
-        <div className="flex gap-4">
+    <div className="card shadow-md rounded-2xl sm:rounded-3xl flex flex-col p-4 sm:p-6 md:p-8 lg:p-10 relative overflow-hidden w-full h-full min-h-[250px]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 sm:mb-6 calendar-header gap-y-2 sm:gap-y-0">
+        <div className="flex gap-2 sm:gap-4">
           <div className="relative">
             <button
               onClick={() => setShowMonthSelect(!showMonthSelect)}
-              className="text-xl font-bold hover:bg-neutral-200 dark-theme:hover:bg-neutral-700 px-3 py-1 rounded-lg transition-colors"
+              className="text-lg sm:text-xl md:text-2xl font-bold hover:bg-neutral-200 dark-theme:hover:bg-neutral-700 px-2 sm:px-3 py-1 rounded-lg transition-colors"
             >
               {monthNames[selectedDate.getMonth()]}
             </button>
             {showMonthSelect && (
-              <div className="absolute top-full left-0 mt-1 bg-white dark-theme:bg-neutral-800 rounded-lg shadow-lg py-2 w-48 z-10">
+              <div className="absolute top-full left-0 mt-1 bg-white dark-theme:bg-neutral-800 rounded-lg shadow-lg py-2 w-32 sm:w-48 z-10">
                 {monthNames.map((month, index) => (
                   <button
                     key={month}
                     onClick={() => handleMonthSelect(index)}
-                    className="w-full text-left px-4 py-2 hover:bg-neutral-100 dark-theme:hover:bg-neutral-700"
+                    className="w-full text-left px-2 sm:px-4 py-2 hover:bg-neutral-100 dark-theme:hover:bg-neutral-700 text-sm sm:text-base"
                   >
                     {month}
                   </button>
@@ -221,17 +181,17 @@ const CalendarCard = () => {
           <div className="relative">
             <button
               onClick={() => setShowYearSelect(!showYearSelect)}
-              className="text-xl font-bold hover:bg-neutral-200 dark-theme:hover:bg-neutral-700 px-3 py-1 rounded-lg transition-colors"
+              className="text-lg sm:text-xl md:text-2xl font-bold hover:bg-neutral-200 dark-theme:hover:bg-neutral-700 px-2 sm:px-3 py-1 rounded-lg transition-colors"
             >
               {selectedDate.getFullYear()}
             </button>
             {showYearSelect && (
-              <div className="absolute top-full left-0 mt-1 bg-white dark-theme:bg-neutral-800 rounded-lg shadow-lg py-2 w-32 z-10">
+              <div className="absolute top-full left-0 mt-1 bg-white dark-theme:bg-neutral-800 rounded-lg shadow-lg py-2 w-20 sm:w-32 z-10">
                 {years.map(year => (
                   <button
                     key={year}
                     onClick={() => handleYearSelect(year)}
-                    className="w-full text-left px-4 py-2 hover:bg-neutral-100 dark-theme:hover:bg-neutral-700"
+                    className="w-full text-left px-2 sm:px-4 py-2 hover:bg-neutral-100 dark-theme:hover:bg-neutral-700 text-sm sm:text-base"
                   >
                     {year}
                   </button>
@@ -241,33 +201,28 @@ const CalendarCard = () => {
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-4">
         {weekDays.map(day => (
-          <div key={day} className="text-center text-sm">
+          <div key={day} className="text-center text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200">
             {day}
           </div>
         ))}
       </div>
-
-      <div className="grid grid-cols-7 gap-2 flex-1">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 min-h-[120px]">
         {generateCalendarDays()}
       </div>
-
       {loading && (
-        <div className="text-center text-neutral-500 dark:text-neutral-400 mt-4">
+        <div className="text-center text-neutral-500 dark:text-neutral-400 mt-2 sm:mt-4 text-xs sm:text-base">
           Загрузка...
         </div>
       )}
-
       {error && (
-        <p className="text-white dark:text-white mb-4 entry-location">
+        <p className="text-white dark:text-white mb-2 sm:mb-4 entry-location text-xs sm:text-base">
           {error}
         </p>
       )}
-
       {events.length === 0 && !loading && !error && (
-        <div className="text-center text-neutral-500 dark:text-neutral-400 mt-4">
+        <div className="text-center text-neutral-500 dark:text-neutral-400 mt-2 sm:mt-4 text-xs sm:text-base">
           На выбранную дату записей нет
         </div>
       )}

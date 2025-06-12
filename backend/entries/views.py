@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from .models import Entry
 from .serializers import EntrySerializer
 from users.models import User  # Импортируем кастомную модель User
@@ -11,7 +13,7 @@ from datetime import datetime
 from django.db.models import Q
 import os
 from django.conf import settings
-from rest_framework.views import APIView
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,23 @@ class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def public(self, request):
+        """
+        Возвращает все публичные записи всех пользователей.
+        """
+        try:
+            entries = Entry.objects.filter(is_public=True).select_related('user').order_by('-created_at')
+            serializer = self.get_serializer(entries, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching all public entries: {str(e)}")
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     def get_queryset(self):
         return Entry.objects.filter(user=self.request.user)
 

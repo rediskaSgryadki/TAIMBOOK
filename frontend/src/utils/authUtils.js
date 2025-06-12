@@ -132,8 +132,9 @@ export const executeRequestWithTokenRefresh = async (requestFn, navigate = null)
 
       try { // Пробуем обновить токен
         console.log('Обновление токена...'); // Логируем начало обновления
+        const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
         // Отправляем запрос на обновление токена
-        const response = await fetch('http://localhost:8000/api/users/token/refresh/', {
+        const response = await fetch(`${API_URL}/api/users/token/refresh/`, {
           method: 'POST', // Метод POST
           headers: { 'Content-Type': 'application/json' }, // Заголовок запроса
           body: JSON.stringify({ refresh: refreshToken }) // Тело запроса с refresh токеном

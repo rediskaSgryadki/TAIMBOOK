@@ -7,11 +7,12 @@ import LastEntryCard from '../../components/account/LastEntryCard';
 import axios from 'axios';
 import CalendarCard from '../../components/account/CalendarCard';
 import EmotionCard from '../../components/emotion/EmotionCard';
-import Joyride, { STATUS } from 'react-joyride';
 import PinOffer from '../../components/account/pin/PinOffer';
+import AccountMenu from '../../components/account/AccountMenu';
+import { useMovingBg } from '../../utils/movingBg';
 
 // Base API URL
-const API_URL = 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
 // Импортируем все изображения из папки covers
 const coverImages = [
@@ -28,17 +29,12 @@ const AccountHome = () => {
   const [loading, setLoading] = useState(true);
   const [lastEntry, setLastEntry] = useState(null);
   const [error, setError] = useState(null);
-  const [runTour, setRunTour] = useState(true);
   const [showPinOffer, setShowPinOffer] = useState(false);
   const { user, updateUser } = useUser();
   const [authChecked, setAuthChecked] = useState(false);
   const [hasPin, setHasPin] = useState(false);
   
-  // Добавляем состояния для эффекта слежения за мышью
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [targetPosition, setTargetPosition] = useState({ x: 0, y: 0 });
-  const welcomeRef = useRef(null);
-  const animationRef = useRef(null);
+  const { ref: welcomeRef, mousePosition, handleMouseMove, handleMouseLeave } = useMovingBg();
 
   // Debug function to check user data and pin_offer status
   const debugPinOffer = (userData) => {
@@ -254,49 +250,6 @@ const AccountHome = () => {
     setShowPinOffer(false);
   };
 
-  // Функция для обработки движения мыши
-  const handleMouseMove = (e) => {
-    if (!welcomeRef.current) return;
-    
-    const rect = welcomeRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Пересчитываем положение для более свободного движения
-    const xMove = (x / rect.width - 0.5) * 20; // Увеличиваем амплитуду
-    const yMove = (y / rect.height - 0.5) * 20;
-    
-    setTargetPosition({ x: xMove, y: yMove });
-  };
-  
-  const handleMouseLeave = () => {
-    // Плавно возвращаем к центру при уходе мыши
-    setTargetPosition({ x: 0, y: 0 });
-  };
-  
-  // Плавное обновление позиции для более гладкого движения
-  useEffect(() => {
-    const updatePosition = () => {
-      setMousePosition(prevPos => {
-        // Быстрая интерполяция текущей позиции к целевой
-        const newX = prevPos.x + (targetPosition.x - prevPos.x) * 0.2; // Увеличиваем скорость следования
-        const newY = prevPos.y + (targetPosition.y - prevPos.y) * 0.2;
-        
-        return { x: newX, y: newY };
-      });
-      
-      animationRef.current = requestAnimationFrame(updatePosition);
-    };
-    
-    animationRef.current = requestAnimationFrame(updatePosition);
-    
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [targetPosition]);
-
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -313,94 +266,35 @@ const AccountHome = () => {
     );
   }
 
-  const tourSteps = [
-    {
-      target: '.welcome-section',
-      content: 'Добро пожаловать в ваш дневник! Здесь вы можете создавать новые записи.',
-      placement: 'bottom'
-    },
-    {
-      target: '.new-entry-button',
-      content: 'Нажмите здесь, чтобы создать новую запись в вашем дневнике.',
-      placement: 'bottom'
-    },
-    {
-      target: '.last-entry-card',
-      content: 'Здесь отображается ваша последняя запись. Вы можете посмотреть её подробнее.',
-      placement: 'right'
-    },
-    {
-      target: '.calendar-card',
-      content: 'Календарь поможет вам отслеживать свои записи по датам.',
-      placement: 'left'
-    }
-  ];
-
-  const handleJoyrideCallback = (data) => {
-    const { status } = data;
-    
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      setRunTour(false);
-    }
-  };
-
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen flex flex-col">
       <AccountHeader />
-      
-      {showPinOffer && (
-        <PinOffer
-          onClose={() => setShowPinOffer(false)}
-          onDontRemind={handleDontRemind}
-        />
-      )}
-      
-      <Joyride
-        callback={handleJoyrideCallback}
-        continuous
-        run={runTour}
-        steps={tourSteps}
-        showSkipButton
-        styles={{
-          options: {
-            zIndex: 40,
-            primaryColor: '#4ade80',
-            backgroundColor: '#1e293b',
-            textColor: '#f8fafc',
-            borderRadius: '12px',
-            overlayColor: 'rgba(0, 0, 0, 0.5)',
-            width: '300px',
-            height: 'auto'
-          }
-        }}
-      />
-      
-      <div className="flex-1 overflow-aut">
-        <section className='flex flex-col gap-y-10 px-20 mt-10 h-full'>
+      <div className="flex flex-grow w-full">
+        <AccountMenu/>
+        <section className='flex flex-col flex-grow justify-center items-center gap-y-10 py-10 px-7 lg:px-20 shadow-[inset_0px_0px_12px_-5px_rgba(0,_0,_0,_0.8)]'>
           <div 
             ref={welcomeRef}
-            className='card w-full py-20 shadow-md rounded-full text-center welcome-section account-welcome-bg'
+            className='card w-full py-10 2xl:py-20 rounded-2xl lg:rounded-full text-center welcome-section account-welcome-bg'
             style={{
               backgroundSize: 'cover',
               backgroundRepeat: 'no-repeat',
-              backgroundPosition: `calc(50% + ${mousePosition.x}px) calc(50% + ${mousePosition.y}px)`,
-              overflow: 'hidden'
+              backgroundPosition: `calc(50% + ${mousePosition.x}px) calc(50% + ${mousePosition.y}px)`
             }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
-            <h2 className="zag text-2xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">Добро пожаловать в ваш дневник</h2>
-            <div className="space-y-4">
+            <h2 className="zag text-lg sm:text-xl md:text-2xl xl:text-3xl font-bold mb-2 sm:mb-4">Добро пожаловать в ваш дневник</h2>
+            <div className="space-y-2 sm:space-y-4">
               <button
                 onClick={handleNewEntry}
-                className="px-5 py-2 bg-[var(--color-green)] text rounded-full new-entry-button"
+                className="px-4 sm:px-5 py-2 sm:py-3 bg-[var(--color-green)] text text-base sm:text-lg md:text-xl rounded-full new-entry-button"
               >
                 Новая запись
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {lastEntry ? (
               <LastEntryCard 
                 entry={lastEntry} 
@@ -408,14 +302,14 @@ const AccountHome = () => {
                 className="last-entry-card bg-block"
               />
             ) : (
-              <div className='bg-block h-[55vh] rounded-3xl flex flex-col items-center justify-center p-10 last-entry-card'>
-                <p className="text-neutral-500 dark:text-neutral-400">У вас пока нет записей</p>
+              <div className='bg-block h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh] rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center p-4 sm:p-10 last-entry-card'>
+                <p className="text-neutral-500 dark:text-neutral-400 text-base sm:text-lg">У вас пока нет записей</p>
               </div>
             )}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <CalendarCard className="calendar-card" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <EmotionCard />
             </div>
           </div>

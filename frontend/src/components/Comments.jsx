@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import ReviewFormModal from './ReviewFormModal';
+import { filterBadWords } from '../utils/filterBadWords';
 
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 
@@ -26,9 +27,9 @@ const Comments = () => {
   const handleSubmitReview = async (reviewData) => {
     try {
       console.log('Sending review data:', reviewData);
-      const response = await axios.post('http://localhost:8000/api/reviews/', {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000'}/api/reviews/`, {
         author: reviewData.author,
-        text: reviewData.text,
+        text: filterBadWords(reviewData.text),
         rating: parseInt(reviewData.rating)
       });
       console.log('Response received:', response.data);
@@ -64,7 +65,7 @@ const Comments = () => {
               </div>
             </div>
             <p className="text text-lg text-gray-600 dark:text-gray-300 mb-4" style={{ wordBreak: 'break-word' }}>
-              {review.text}
+              {filterBadWords(review.text)}
             </p>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {new Date(review.created_at).toLocaleDateString('ru-RU', {

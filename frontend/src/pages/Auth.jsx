@@ -6,6 +6,7 @@ import { getToken, setAuthData, clearAuthData } from '../utils/authUtils';
 import PinForm from '../components/account/pin/PinForm';
 import Header from '../components/Header';
 
+// Переиспользуемый компонент для ввода пароля
 const PasswordInput = ({
   id,
   name,
@@ -16,31 +17,33 @@ const PasswordInput = ({
   setShowPassword,
   autoComplete = 'current-password',
 }) => (
-  <div className="relative mb-3">
-    <label htmlFor={id} className="block text-sm font-medium mb-1">
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
       {placeholder}
     </label>
-    <input
-      id={id}
-      name={name}
-      type={showPassword ? 'text' : 'password'}
-      autoComplete={autoComplete}
-      required
-      className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-black rounded-md focus:outline-none focus:ring-lime-500 focus:border-lime-500 focus:z-10 sm:text-sm pr-10"
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-    />
-    <button
-      type="button"
-      tabIndex={-1}
-      className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-lime-500 focus:outline-none"
-      style={{ background: 'none', border: 'none' }}
-      onClick={() => setShowPassword((v) => !v)}
-      aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-    >
-      {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-    </button>
+    <div className="relative flex items-center">
+      <input
+        id={id}
+        name={name}
+        type={showPassword ? 'text' : 'password'}
+        autoComplete={autoComplete}
+        required
+        className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white pr-10"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        className="absolute right-0 flex items-center px-3 text-neutral-500 hover:text-indigo-700 dark:text-neutral-400 dark:hover:text-indigo-300 focus:outline-none"
+        style={{ background: 'none', border: 'none' }}
+        onClick={() => setShowPassword((v) => !v)}
+        aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+      >
+        {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+      </button>
+    </div>
   </div>
 );
 
@@ -57,12 +60,14 @@ const Auth = () => {
   const [showPinForm, setShowPinForm] = useState(false);
   const navigate = useNavigate();
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
+
   useEffect(() => {
     const checkTokenAndPinStatus = async () => {
       const token = getToken();
       if (token) {
         try {
-          const response = await axios.get('http://localhost:8000/api/users/me/', {
+          const response = await axios.get(`${API_URL}/api/users/me/`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.has_pin) {
@@ -71,6 +76,7 @@ const Auth = () => {
             navigate('/account/home');
           }
         } catch (err) {
+          console.error("Token validation failed:", err);
           clearAuthData();
         }
       }
@@ -104,14 +110,14 @@ const Auth = () => {
         ? { email, password }
         : { username, email, password, password2: confirmPassword };
 
-      const response = await axios.post(`http://localhost:8000/api/users/${endpoint}/`, data, {
+      const response = await axios.post(`${API_URL}/api/users/${endpoint}/`, data, {
         headers: { 'Content-Type': 'application/json' }
       });
 
       if ((response.data.access || response.data.token) && response.data.user) {
         setAuthData(response.data);
         const token = response.data.access || response.data.token;
-        const pinResponse = await axios.get('http://localhost:8000/api/users/me/', {
+        const pinResponse = await axios.get(`${API_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (pinResponse.data.has_pin) {
@@ -123,11 +129,23 @@ const Auth = () => {
         setError('Ошибка: Данные авторизации отсутствуют или неполные');
       }
     } catch (err) {
-      if (err.response?.status === 401 && isLogin) {
+      console.error("Authentication error:", err);
+      if (err.response?.status === 400) {
+         // Handle specific 400 errors from backend, e.g., duplicate user
+         if (err.response.data.email) {
+            setError('Пользователь с таким Email уже существует.');
+         } else if (err.response.data.username) {
+             setError('Пользователь с таким именем пользователя уже существует.');
+         } else if (err.response.data.password) {
+             setError('Неверный email или пароль.'); // Common login error
+         } else {
+             setError(err.response.data.detail || 'Ошибка запроса.');
+         }
+      } else if (err.response?.status === 401 && isLogin) {
         setError('Неверный email или пароль. Пожалуйста, попробуйте снова.');
         clearAuthData();
       } else {
-        setError(err.response?.data?.error || 'Произошла ошибка');
+        setError('Произошла ошибка. Пожалуйста, попробуйте позже.');
       }
     } finally {
       setLoading(false);
@@ -145,33 +163,33 @@ const Auth = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 bg-white dark:bg-neutral-800 p-8 rounded-xl shadow-lg">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold">
-              {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+            <h2 className="text-center text-3xl font-extrabold text-neutral-900 dark:text-neutral-100">
+              {isLogin ? 'Вход в аккаунт' : 'Создать аккаунт'}
             </h2>
-            <p className="mt-2 text-center text-sm">
+            <p className="mt-2 text-center text-sm text-neutral-600 dark:text-neutral-400">
               Или{' '}
               <button
                 onClick={handleToggleMode}
-                className="font-medium text-lime-600 hover:text-lime-500 bg-transparent border-none cursor-pointer"
+                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 bg-transparent border-none cursor-pointer p-0"
               >
                 {isLogin ? 'зарегистрируйтесь' : 'войдите'}
               </button>
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                 <span className="block sm:inline">{error}</span>
               </div>
             )}
-            <input type="hidden" name="remember" defaultValue="true" />
+            <input type="hidden" name="remember" defaultValue="true" /> {/* Keep remember hidden input if needed */}
             <div className="space-y-4">
               {!isLogin && (
-                <div className="mb-3">
-                  <label htmlFor="username" className="block text-sm font-medium mb-1">
+                <div> {/* Use div for consistent spacing */}
+                  <label htmlFor="username" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                     Имя пользователя
                   </label>
                   <input
@@ -180,15 +198,15 @@ const Auth = () => {
                     type="text"
                     autoComplete="username"
                     required={!isLogin}
-                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-black rounded-md focus:outline-none focus:ring-lime-500 focus:border-lime-500 focus:z-10 sm:text-sm"
+                    className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
                     placeholder="Имя пользователя"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
               )}
-              <div className="mb-3">
-                <label htmlFor="email-address" className="block text-sm font-medium mb-1">
+              <div> {/* Use div for consistent spacing */}
+                <label htmlFor="email-address" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Email
                 </label>
                 <input
@@ -197,7 +215,7 @@ const Auth = () => {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-black rounded-md focus:outline-none focus:ring-lime-500 focus:border-lime-500 focus:z-10 sm:text-sm"
+                  className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -227,11 +245,12 @@ const Auth = () => {
                 />
               )}
             </div>
+
             <div>
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--color-green)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
               >
                 {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
               </button>

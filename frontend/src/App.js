@@ -17,6 +17,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import UserAgreement from './pages/UserAgreement';
 import About from './pages/About';
 import Social from './pages/social/social';
+import UserProfile from './pages/social/UserProfile';
+
 function App() {
   return (
     <ThemeProvider>
@@ -31,11 +33,14 @@ function App() {
             <Route path="/account/home" element={<AccountHome />} />
             <Route path="/account/entry/:id" element={<EntryView />} />
             <Route path="/account/entries" element={<EntriesList />} />
+            <Route path="/account/entries/:id/edit" element={<EntryEditor />} />
             <Route path="/account/new-entry" element={<EntryEditor />} />
             <Route path="/account/emotions" element={<Emotions />} />
+            <Route path="/account/profile" element={<Profile />} />
             <Route path="/profile/:username" element={<Profile />} />
             <Route path="/account/settings" element={<Settings />} />
             <Route path="/social" element={<Social />} />
+            <Route path="/social/user/:username" element={<UserProfile />} />
           </Routes>
         </Router>
       </UserProvider>

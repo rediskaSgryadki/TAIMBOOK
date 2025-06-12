@@ -3,43 +3,34 @@ import AccountHeader from '../../components/account/AccountHeader'
 import UserPosts from '../../components/social/UserPosts'
 import { getToken } from '../../utils/authUtils'
 import { useNavigate } from 'react-router-dom'
+import AccountMenu from '../../components/account/AccountMenu'
+// Если здесь есть роутинг, добавить:
+// import UserProfile from './UserProfile';
+// <Route path="/social/user/:userId" element={<UserProfile />} />
 
 const Social = () => {
   const [publicPosts, setPublicPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000'
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const token = getToken()
-        if (!token) {
-          navigate('/auth')
-          return
-        }
-
-        // Если бэкенд поддерживает фильтрацию через query, то можно прямо туда:
-        const response = await fetch(
-          'http://localhost:8000/api/entries/?is_public=true',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
-          }
-        )
-
+        const response = await fetch(`${API_URL}/api/entries/public/`, {
+          headers: {
+            Accept: 'application/json',
+          },
+        })
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           throw new Error(errorData.detail || 'Failed to fetch entries')
         }
-
         const data = await response.json()
-
-        // На случай, если бэкенд не фильтрует, оставим дополнительный фильтр на клиенте:
-        const onlyPublic = data.filter((post) => post.is_public === true)
-        setPublicPosts(onlyPublic)
+        setPublicPosts(data)
       } catch (err) {
         console.error('Error fetching public entries:', err)
         setError(err.message)
@@ -51,36 +42,60 @@ const Social = () => {
     fetchPosts()
   }, [navigate])
 
+  // Фильтрация постов по поиску
+  const filteredPosts = publicPosts.filter(post => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.trim().toLowerCase();
+    // Поиск по хештегам
+    if (query.startsWith('#')) {
+      const tag = query.slice(1);
+      return (post.hashtags || '').toLowerCase().split(',').some(t => t.trim().includes(tag));
+    }
+    // Поиск по заголовку и содержимому
+    const title = (post.title || '').toLowerCase();
+    const content = (post.content || post.htmlContent || '').toLowerCase();
+    const hashtags = (post.hashtags || '').toLowerCase();
+    return title.includes(query) || content.includes(query) || hashtags.includes(query);
+  });
+
   return (
     <>
       <AccountHeader />
 
-      <div className="space-y-20">
-        <section className="px-20 flex justify-end">
-          <input
-            type="text"
-            className="card px-10 py-2 rounded-b-full"
-            placeholder="👀 Поиск"
-          />
-        </section>
+      <div className="flex flex-grow h-screen">
+        <AccountMenu/>
+        <div className="flex flex-col flex-grow space-y-20">
+          <div className="px-20 w-screen flex justify-center md:justify-end">
+            <input
+              type="text"
+              className="card px-10 py-4 md:py-2 rounded-b-full focus:outline-none"
+              placeholder="👀 Поиск"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-        <section className="px-20 space-y-10">
-          {loading ? (
-            <p className="text-center text-gray-500">
-              Загрузка публичных записей...
-            </p>
-          ) : error ? (
-            <p className="text-center text-red-500">Ошибка: {error}</p>
-          ) : publicPosts.length === 0 ? (
-            <p className="text-center text-gray-500">
-              Публичных записей пока нет.
-            </p>
-          ) : (
-            publicPosts.map((post) => (
-              <UserPosts key={post.id} post={post} />
-            ))
-          )}
-        </section>
+          <div className="w-screen px-7 md:px-20 space-y-10">
+            <div></div>
+            {loading ? (
+              <p className="text-center text-gray-500">
+                Загрузка публичных записей...
+              </p>
+            ) : error ? (
+              <p className="text-center text-red-500">Ошибка: {error}</p>
+            ) : filteredPosts.length === 0 ? (
+              <p className="text-center text-gray-500">
+                Нет записей по вашему запросу.
+              </p>
+            ) : (
+              filteredPosts.map((post) => (
+                <div key={post.id} className="mx-auto w-full md:w-1/2">
+                  <UserPosts post={post} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </>
   )

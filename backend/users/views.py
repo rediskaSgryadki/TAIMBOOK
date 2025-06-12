@@ -5,8 +5,9 @@ from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer, PinCodeSerializer, VerifyPinSerializer, DontRemindSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer, PinCodeSerializer, VerifyPinSerializer, DontRemindSerializer, ChangePasswordSerializer
 from .models import User
+from rest_framework.decorators import api_view, permission_classes
 
 # Create your views here.
 
@@ -74,7 +75,7 @@ class SetPinView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = PinCodeSerializer(data=request.data)
+        serializer = PinCodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             request.user.pin_code = serializer.validated_data['pin_code']
             request.user.save()
@@ -102,3 +103,28 @@ class DontRemindView(APIView):
             request.user.save()
             return Response({'status': 'success'})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({'status': 'success'})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_by_username(request):
+    username = request.query_params.get('username')
+    if not username:
+        return Response({'detail': 'username parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        user = User.objects.get(username=username)
+        serializer = UserSerializer(user, context={'request': request})
+        return Response(serializer.data)
+    except User.DoesNotExist:
+        return Response({'detail': f'User with username {username} not found'}, status=status.HTTP_404_NOT_FOUND)

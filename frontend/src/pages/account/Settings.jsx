@@ -3,9 +3,61 @@ import AccountHeader from '../../components/account/AccountHeader'
 import axios from 'axios'
 import { getToken, setAuthData } from '../../utils/authUtils'
 import { useTheme } from '../../context/ThemeContext'
+import AccountMenu from '../../components/account/AccountMenu'
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
+
+// Универсальный инпут с глазом
+function PasswordInput({ id, label, value, onChange, show, setShow, placeholder, autoComplete = 'off' }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">{label}</label>
+      <div className="relative flex items-center">
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          autoComplete={autoComplete}
+          required
+          className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white pr-10"
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          className="absolute right-0 flex items-center px-3 text-neutral-500 hover:text-indigo-700 dark:text-neutral-400 dark:hover:text-indigo-300 focus:outline-none"
+          style={{ background: 'none', border: 'none' }}
+          onClick={() => setShow((v) => !v)}
+          aria-label={show ? 'Скрыть' : 'Показать'}
+        >
+          {show ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Универсальный текстовый инпут (без глаза)
+function TextInput({ id, label, value, onChange, placeholder, autoComplete = 'off' }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">{label}</label>
+      <input
+        id={id}
+        type="text"
+        autoComplete={autoComplete}
+        required
+        className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
 
 const ProfileSettings = () => {
-  const { themeFamily, isDarkMode, setThemeFamily } = useTheme();
+  const { isDarkMode } = useTheme();
   const [name, setName] = useState('')
   const [profilePhoto, setProfilePhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState('')
@@ -15,39 +67,21 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState(null)
   const [activeSubSection, setActiveSubSection] = useState(null)
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pinStep, setPinStep] = useState(1);
+  const [pinOld, setPinOld] = useState('');
+  const [pinCodeNew, setPinCodeNew] = useState('');
+  const [pinCodeNewConfirm, setPinCodeNewConfirm] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPinOld, setShowPinOld] = useState(false);
+  const [showPinCodeNew, setShowPinCodeNew] = useState(false);
+  const [showPinCodeNewConfirm, setShowPinCodeNewConfirm] = useState(false);
 
-  const themes = [
-    { 
-      name: 'light', 
-      label: 'Стандартная', 
-      lightColors: ['#FFFFFF', '#393e46', '#4ade80'],
-      darkColors: ['#333333', '#FFFFFF', '#22c55e']
-    },
-    { 
-      name: 'SmokyGarden', 
-      label: 'Дымчатый сад', 
-      lightColors: ['#7db6eb', '#fffbe0', '#e8f4ff'],
-      darkColors: ['#336799', '#feffc2', '#c5e3ff'] 
-    },
-    { 
-      name: 'BluePages', 
-      label: 'Синие страницы', 
-      lightColors: ['#c4e0f3', '#2c4b66', '#cad9bc'],
-      darkColors: ['#2a537a', '#FFFFFF', '#a3b287']
-    },
-    { 
-      name: 'MidnightEntries', 
-      label: 'Полуночные записи', 
-      lightColors: ['#abbccd', '#2b313c', '#f9dece'],
-      darkColors: ['#2e3240', '#FFFFFF', '#e5b9a0']
-    },
-    { 
-      name: 'PastelEntries', 
-      label: 'Пастельные записи', 
-      lightColors: ['#d9daec', '#5d5e6f', '#e1d7ca'],
-      darkColors: ['#7a7b8f', '#FFFFFF', '#bdb3a6']
-    }
-  ];
+  const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
   const toggleSection = (section) => {
     if (activeSection === section) {
@@ -78,7 +112,7 @@ const ProfileSettings = () => {
           return;
         }
 
-        const response = await axios.get('http://localhost:8000/api/users/me/', {
+        const response = await axios.get(`${API_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -104,12 +138,6 @@ const ProfileSettings = () => {
     }
   };
 
-  const handleThemeChange = (themeName) => {
-    setThemeFamily(themeName);
-    setSuccessMessage('Тема успешно изменена');
-    setTimeout(() => setSuccessMessage(''), 3000);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Original handleSubmit logic will be split into dedicated functions
@@ -125,7 +153,7 @@ const ProfileSettings = () => {
       const formData = new FormData();
       formData.append('username', name);
       
-      const response = await axios.patch('http://localhost:8000/api/users/me/', formData, {
+      const response = await axios.patch(`${API_URL}/api/users/me/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -157,7 +185,7 @@ const ProfileSettings = () => {
         formData.append('profile_photo', profilePhoto);
       }
       
-      const response = await axios.patch('http://localhost:8000/api/users/me/', formData, {
+      const response = await axios.patch(`${API_URL}/api/users/me/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -165,7 +193,7 @@ const ProfileSettings = () => {
       });
       setUserData(response.data);
       // Update photo preview with the new URL from the response
-      setPhotoPreview(response.data.profile_photo_url ? `http://localhost:8000${response.data.profile_photo_url}` : '');
+      setPhotoPreview(response.data.profile_photo_url ? `${API_URL}${response.data.profile_photo_url}` : '');
       // Update user data in localStorage after successful photo update
       setAuthData({ user: response.data });
       setSuccessMessage('Фото профиля успешно обновлено');
@@ -173,6 +201,105 @@ const ProfileSettings = () => {
     } catch (error) {
       console.error('Ошибка обновления фото профиля:', error);
       setErrorMessage('Не удалось обновить фото профиля. Пожалуйста, попробуйте позже.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setErrorMessage('Пожалуйста, заполните все поля для смены пароля.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Новые пароли не совпадают.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = getToken();
+      await axios.post(`${API_URL}/api/users/change-password/`, {
+        old_password: oldPassword,
+        new_password: newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccessMessage('Пароль успешно изменён.');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage(
+        error?.response?.data?.old_password?.[0] ||
+        error?.response?.data?.new_password?.[0] ||
+        error?.response?.data?.detail ||
+        'Не удалось сменить пароль. Пожалуйста, попробуйте позже.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOldPin = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    if (!pinOld) {
+      setErrorMessage('Введите старый пин-код.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = getToken();
+      await axios.post(`${API_URL}/api/users/verify-pin/`, {
+        pin_code: pinOld
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPinStep(2);
+    } catch (error) {
+      setErrorMessage('Старый пин-код неверен.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePin = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    if (!pinCodeNew || !pinCodeNewConfirm) {
+      setErrorMessage('Введите новый пин-код и подтверждение.');
+      return;
+    }
+    if (pinCodeNew !== pinCodeNewConfirm) {
+      setErrorMessage('Пин-коды не совпадают.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = getToken();
+      const formData = new FormData();
+      formData.append('old_pin', pinOld);
+      formData.append('pin_code', pinCodeNew);
+      formData.append('confirm_pin', pinCodeNewConfirm);
+      await axios.post(`${API_URL}/api/users/set-pin/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setUserData({ ...userData, has_pin: true });
+      setAuthData({ user: { ...userData, has_pin: true } });
+      setSuccessMessage('Пин-код успешно изменён.');
+      setPinOld('');
+      setPinCodeNew('');
+      setPinCodeNewConfirm('');
+      setPinStep(1);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Не удалось изменить пин-код. Пожалуйста, попробуйте позже.');
     } finally {
       setLoading(false);
     }
@@ -197,6 +324,7 @@ const ProfileSettings = () => {
     <>
       <AccountHeader/>
       <section className="container mx-auto px-4 py-8">
+        <AccountMenu/>
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-bold mb-6">Настройки профиля</h1>
           
@@ -243,17 +371,12 @@ const ProfileSettings = () => {
                       <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
                         <div className="space-y-4">
                           <div>
-                            <label htmlFor="name" className="block text-sm font-medium mb-1">
-                              Имя пользователя
-                            </label>
-                            <input
+                            <TextInput
                               id="name"
-                              type="text"
+                              label="Имя пользователя"
                               value={name}
                               onChange={(e) => setName(e.target.value)}
-                              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 rounded-md focus:outline-none focus:ring-lime-500 focus:border-lime-500 focus:z-10 sm:text-sm"
                               placeholder="Ваше имя"
-                              required
                             />
                           </div>
                           <button 
@@ -290,7 +413,6 @@ const ProfileSettings = () => {
                             )}
                           </div>
                           <div className="flex-1">
-                            <label className="block text-sm font-medium mb-2">Загрузить новое фото</label>
                             <input
                               type="file"
                               accept="image/*"
@@ -309,78 +431,153 @@ const ProfileSettings = () => {
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Theme Selection Section */}
-            <div className="card rounded-lg shadow-md overflow-hidden">
-              <div 
-                onClick={() => toggleSection('theme')} 
-                className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
-              >
-                <h2 className="text-xl font-semibold">Выбор темы</h2>
-                <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'theme' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-              
-              {activeSection === 'theme' && (
-                <div className="p-6 border-t">
-                  <p className="mb-4 text-sm opacity-80">
-                    Выберите основную тему. Для переключения между светлой и темной версией используйте кнопку в верхнем меню.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {themes.map((theme) => (
-                      <div 
-                        key={theme.name}
-                        onClick={() => handleThemeChange(theme.name)}
-                        className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-                          themeFamily === theme.name ? 'border-lime-500 shadow-md' : 'border-gray-200'
-                        }`}
-                      >
-                        <div className="mb-3">
-                          <span className="font-medium">{theme.label}</span>
-                        </div>
-                        
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 mr-2">🌞</div>
-                            <div className="flex">
-                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.lightColors[0] }}></div>
-                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.lightColors[1] }}></div>
-                              <div className="w-4 h-4 rounded-full border border-black" style={{ backgroundColor: theme.lightColors[2] }}></div>
-                            </div>
+                  {/* Password Sub-section */}
+                  <div>
+                    <div 
+                      onClick={() => toggleSubSection('password')} 
+                      className="p-3 pl-8 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
+                    >
+                      <h3 className="text-lg font-medium">Смена пароля</h3>
+                      <svg className={`w-4 h-4 transition-transform duration-300 ${activeSubSection === 'password' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    {activeSubSection === 'password' && (
+                      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
+                        <div className="space-y-4">
+                          <div>
+                            <PasswordInput
+                              id="oldPassword"
+                              label="Старый пароль"
+                              value={oldPassword}
+                              onChange={e => setOldPassword(e.target.value)}
+                              show={showOldPassword}
+                              setShow={setShowOldPassword}
+                              placeholder="Введите старый пароль"
+                            />
                           </div>
-                          
-                          <div className="flex items-center">
-                            <div className="w-4 h-4 mr-2">🌙</div>
-                            <div className="flex">
-                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.darkColors[0] }}></div>
-                              <div className="w-4 h-4 rounded-full mr-1 border border-black" style={{ backgroundColor: theme.darkColors[1] }}></div>
-                              <div className="w-4 h-4 rounded-full border border-black" style={{ backgroundColor: theme.darkColors[2] }}></div>
-                            </div>
+                          <div>
+                            <PasswordInput
+                              id="newPassword"
+                              label="Новый пароль"
+                              value={newPassword}
+                              onChange={e => setNewPassword(e.target.value)}
+                              show={showNewPassword}
+                              setShow={setShowNewPassword}
+                              placeholder="Введите новый пароль"
+                            />
                           </div>
-                        </div>
-                        
-                        <div className="w-full h-20 rounded overflow-hidden flex mt-2">
-                          <div className="w-1/2 h-full p-1">
-                            <div className="w-full h-full rounded" style={{ backgroundColor: theme.lightColors[0] }}>
-                              <div className="w-1/2 h-1/2 rounded m-2" style={{ backgroundColor: theme.lightColors[2] }}></div>
-                            </div>
+                          <div>
+                            <PasswordInput
+                              id="confirmPassword"
+                              label="Повторите новый пароль"
+                              value={confirmPassword}
+                              onChange={e => setConfirmPassword(e.target.value)}
+                              show={showConfirmPassword}
+                              setShow={setShowConfirmPassword}
+                              placeholder="Повторите новый пароль"
+                            />
                           </div>
-                          <div className="w-1/2 h-full p-1">
-                            <div className="w-full h-full rounded" style={{ backgroundColor: theme.darkColors[0] }}>
-                              <div className="w-1/2 h-1/2 rounded m-2" style={{ backgroundColor: theme.darkColors[2] }}></div>
-                            </div>
-                          </div>
+                          <button
+                            onClick={handleChangePassword}
+                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                          >
+                            Сменить пароль
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
             </div>
+            
+            {/* Pin Code Section */}
+            {userData?.has_pin && (
+            <div className="card rounded-lg shadow-md overflow-hidden">
+              <div 
+                  onClick={() => toggleSection('pin')} 
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
+              >
+                  <h2 className="text-xl font-semibold">Пин-код</h2>
+                  <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'pin' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              
+                {activeSection === 'pin' && (
+                <div className="p-6 border-t">
+                    <div className="space-y-4">
+                      {pinStep === 1 && (
+                        <>
+                          <div>
+                            <div className="relative">
+                              <PasswordInput
+                                id="pinOld"
+                                label="Старый пин-код"
+                                value={pinOld}
+                                onChange={e => setPinOld(e.target.value)}
+                                show={showPinOld}
+                                setShow={setShowPinOld}
+                                placeholder="Старый пин-код"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleVerifyOldPin}
+                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                          >
+                            Далее
+                          </button>
+                        </>
+                      )}
+                      {pinStep === 2 && (
+                        <>
+                          <div>
+                            <label htmlFor="pinCodeNew" className="block text-sm font-medium mb-1">
+                              Введите новый пин-код
+                            </label>
+                            <div className="relative">
+                              <PasswordInput
+                                id="pinCodeNew"
+                                label="Новый пин-код"
+                                value={pinCodeNew}
+                                onChange={e => setPinCodeNew(e.target.value)}
+                                show={showPinCodeNew}
+                                setShow={setShowPinCodeNew}
+                                placeholder="Новый пин-код"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label htmlFor="pinCodeNewConfirm" className="block text-sm font-medium mb-1">
+                              Повторите новый пин-код
+                            </label>
+                            <div className="relative">
+                              <PasswordInput
+                                id="pinCodeNewConfirm"
+                                label="Повторите новый пин-код"
+                                value={pinCodeNewConfirm}
+                                onChange={e => setPinCodeNewConfirm(e.target.value)}
+                                show={showPinCodeNewConfirm}
+                                setShow={setShowPinCodeNewConfirm}
+                                placeholder="Повторите новый пин-код"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleChangePin}
+                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                          >
+                            Сохранить пин-код
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                </div>
+              )}
           </div>
         </div>
       </section>

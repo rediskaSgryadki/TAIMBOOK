@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import AccountHeader from '../../../components/account/AccountHeader';
+import AccountMenu from '../../../components/account/AccountMenu';
 import { getToken, clearAuthData } from '../../../utils/authUtils';
 
 const MAX_CONTENT_LENGTH = 180;
 const MAX_HASHTAG_LENGTH = 15;
+const API_URL = process.env.REACT_APP_API_URL || 'http://192.168.1.135:8000';
 
 const EntriesList = () => {
   const [searchParams] = useSearchParams();
@@ -58,7 +60,7 @@ const EntriesList = () => {
         }
 
         console.log('Fetching entries for date:', date);
-        const response = await fetch(`http://localhost:8000/api/entries/by_date/?date=${date}`, {
+        const response = await fetch(`${API_URL}/api/entries/by_date/?date=${date}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -113,115 +115,104 @@ const EntriesList = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen flex flex-col">
       <AccountHeader />
-      <div className="flex-1 overflow-auto">
-        <section className='flex flex-col gap-y-10 px-20 mt-10'>
-          <div className='w-full py-10 card rounded-3xl text-center'>
-            <h2 className="text-2xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">
-              Записи за {formatDate(date)}
-            </h2>
-            <button
-              onClick={() => {
-                navigate(`/account/new-entry?date=${date}`);
-              }}
-              className="px-6 py-2 bg-[var(--color-green)] text-white rounded-full text-sm font-medium shadow hover:bg-green-700 transition"
-            >
-              Новая запись
-            </button>
-          </div>
+      <div className="flex flex-1 h-screen">
+        <AccountMenu />
+        <main className="flex-1 flex flex-col px-10 py-10 fon shadow-[inset_0px_0px_12px_-5px_rgba(0,_0,_0,_0.08)] bg-neutral-50 dark:bg-neutral-900 overflow-y-auto">
+          <section className="flex flex-col gap-y-10 w-full max-w-3xl mx-auto">
+            <div className="w-full py-10 card rounded-3xl text-center">
+              <h2 className="text-2xl font-bold mb-4 text-neutral-900 dark:text-neutral-100">
+                Записи за {formatDate(date)}
+              </h2>
+              <button
+                onClick={() => {
+                  navigate(`/account/new-entry?date=${date}`);
+                }}
+                className="px-6 py-2 bg-[var(--color-green)] text-white rounded-full text-sm font-medium shadow hover:bg-green-700 transition"
+              >
+                Новая запись
+              </button>
+            </div>
 
-          {entries.length > 0 ? (
-            <div className='grid grid-cols-3 gap-6'>
-              {entries.map(entry => {
+            {entries.length > 0 ? (
+              entries.map(entry => {
                 const getShortHtml = (html, maxLen = MAX_CONTENT_LENGTH) => {
                   if (!html) return '';
                   const div = document.createElement('div');
                   div.innerHTML = html;
-                  let text = div.innerText;
-                  if (text.length > maxLen) text = text.slice(0, maxLen) + '...';
-                  // Обрезаем только текст, но возвращаем исходный HTML, если короткий
-                  if (div.innerText.length > maxLen) {
-                    // Обрезаем HTML по символам (грубый способ)
-                    return html.slice(0, maxLen) + '...';
+                  const text = div.innerText;
+                  if (text.length <= maxLen) {
+                    return html;
+                  } else {
+                    return text.slice(0, maxLen) + '...';
                   }
-                  return html;
                 };
-                
                 const hashtagsList = formatHashtags(entry.hashtags);
-                
                 return (
-                  <div 
+                  <div
                     key={entry.id}
-                    className="card rounded-3xl flex flex-col p-10 relative overflow-hidden cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                    onClick={() => navigate(`/account/entry/${entry.id}/edit`)}
+                    className="card px-2 sm:px-6 md:px-10 py-6 sm:py-10 w-full min-h-[40vh] rounded-3xl space-y-6 flex flex-col justify-between items-center mx-auto shadow-lg bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                   >
-                    {entry.cover_image && (
-                      <img
-                        src={entry.cover_image}
-                        alt="Обложка записи"
-                        className="w-1/2 h-48 rounded-3xl border-2 object-cover mx-auto mb-6"
-                      />
-                    )}
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 truncate max-w-[60%]">{entry.title}</h3>
-                      {entry.location && (
-                        <span className="text-sm text-neutral-500 dark:text-neutral-400 truncate max-w-[35%]">
-                          {entry.location.name || `${entry.location.latitude?.toFixed(2) ?? ''}, ${entry.location.longitude?.toFixed(2) ?? ''}`}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-neutral-600 dark:text-neutral-300 flex-1 mb-4 break-words" 
-                      dangerouslySetInnerHTML={{ __html: getShortHtml(entry.content, MAX_CONTENT_LENGTH) }} />
-                    
-                    {/* Хэштеги с эффектом постепенного исчезновения */}
-                    {hashtagsList.length > 0 && (
-                      <div className="mb-8 overflow-hidden">
-                        <div className="flex flex-wrap">
-                          {hashtagsList.map((tag, index) => (
-                            <span 
-                              key={index} 
-                              className={`text-xs mr-2 mb-1 ${getHashtagColorClass(tag)}`}
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-end justify-end absolute bottom-6 right-10 w-[calc(100%-5rem)]">
-                      <span className="text-sm text-neutral-500 dark:text-neutral-400 mr-4 self-end">
+                    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-4">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 truncate max-w-full">{entry.title}</h3>
+                      <span className="text-sm text-neutral-500 dark:text-neutral-400">
                         {new Date(entry.created_at).toLocaleTimeString('ru-RU', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
                       </span>
+                    </div>
+                    {entry.cover_image && (
+                      <img
+                        src={entry.cover_image}
+                        alt="Обложка записи"
+                        className="w-full max-w-xl h-64 object-cover rounded-3xl border-2 mx-auto"
+                      />
+                    )}
+                    <div className="overflow-x-auto w-full">
+                      <div className="prose dark:prose-invert max-w-none transition-all duration-300 h-40 overflow-hidden">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: getShortHtml(entry.htmlContent || entry.content, MAX_CONTENT_LENGTH) }}
+                        />
+                      </div>
+                    </div>
+                    {hashtagsList.length > 0 && (
+                      <div className="flex flex-wrap gap-2 w-full">
+                        {hashtagsList.map((tag, index) => (
+                          <span
+                            key={index}
+                            className={`text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 ${getHashtagColorClass(tag)}`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center w-full mt-2">
                       {entry.is_public && (
-                        <span className="mr-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full self-end">
+                        <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                           Публичная
                         </span>
                       )}
+                      <div className="flex-1"></div>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/account/entry/${entry.id}`);
-                        }}
-                        className="px-4 py-2 bg-[var(--color-green)] text-white rounded-full text-sm font-medium shadow hover:bg-green-700 transition"
+                        onClick={() => navigate(`/account/entry/${entry.id}`)}
+                        className="ml-auto px-4 py-2 bg-[var(--color-green)] text-white rounded-full text-sm font-medium shadow hover:bg-green-700 transition"
                       >
                         Подробнее
                       </button>
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          ) : (
-            <div className='bg-neutral-100 dark:bg-neutral-800 rounded-3xl p-10 text-center'>
-              <p className="text-neutral-500 dark:text-neutral-400">На эту дату записей нет</p>
-            </div>
-          )}
-        </section>
+              })
+            ) : (
+              <div className="bg-neutral-100 dark:bg-neutral-800 rounded-3xl p-10 text-center">
+                <p className="text-neutral-500 dark:text-neutral-400">На эту дату записей нет</p>
+              </div>
+            )}
+          </section>
+        </main>
       </div>
       <style>{`
         .entry-content table, .entry-content td, .entry-content th {

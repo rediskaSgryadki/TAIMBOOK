@@ -42,11 +42,11 @@ const ReviewFormModal = ({ onClose, onSubmit }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[100]" style={{ zIndex: 2147483647 }}>
-      <div className="w-1/2 card p-10 shadow-xl rounded-3xl grid grid-cols-2 gap-x-10">
+      <div className="w-full md:w-1/2 card p-10 shadow-xl rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-x-10">
         <div className="flex flex-col justify-between">
           <div className="flex flex-col gap-y-2">
-            <h3 className="zag tracking-wider text-3xl">Оставить отзыв</h3>
-            <p className="text text-xl">Поделитесь вашим мнением о нашем сервисе</p>
+            <h3 className="zag tracking-wider text-3xl text-center">Оставить отзыв</h3>
+            <p className="text text-xl text-center">Поделитесь вашим мнением о нашем сервисе</p>
           </div>
           
           {error && (
@@ -141,7 +141,7 @@ const ReviewFormModal = ({ onClose, onSubmit }) => {
           </form>
         </div>
         
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center hidden md:block">
           <img src="/img/Home/social media, mobile device _ smartphone, like, comment, image, picture, views.webp" alt="Отзыв" className="max-w-full h-auto"/>
         </div>
       </div>
