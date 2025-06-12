@@ -1,25 +1,24 @@
 import os
 from pathlib import Path
-import dj_database_url
-from dotenv import load_dotenv
+import environ
 from datetime import timedelta
 
-# Загружаем переменные окружения из файла .env
-# Если .env находится в другом месте, укажите путь: load_dotenv(dotenv_path=BASE_DIR / '.env')
-load_dotenv()
-
+# Инициализация environ и загрузка .env файла
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+# Читаем .env (для локальной разработки)
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# Получаем SECRET_KEY из окружения, если не найден — выбрасываем ошибку
-SECRET_KEY = os.getenv('SECRET_KEY')
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is not set!")
+SECRET_KEY = env('SECRET_KEY')  # обязательная переменная, ошибка если не задана
 
-# DEBUG — преобразуем строку в булево значение
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
+DEBUG = env('DEBUG')
 
-# ALLOWED_HOSTS — список, получаем из переменной окружения, разделённой запятыми
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+# ALLOWED_HOSTS — список из переменной окружения, разделённой запятыми
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+
+# Добавляем хост Render, если переменная задана
 render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 if render_hostname:
     ALLOWED_HOSTS.append(render_hostname)
@@ -76,10 +75,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Настройка базы данных, берём из DATABASE_URL с SSL и кэшированием соединения
+# Подключение к базе данных через django-environ (DATABASE_URL из .env)
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
+    'default': env.db(
+        default=None,
         conn_max_age=600,
         ssl_require=True
     )
@@ -93,11 +92,11 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# CORS_ALLOWED_ORIGINS — список доменов фронтенда, разделённых запятыми
-CORS_ALLOWED_ORIGINS = os.getenv(
+# CORS_ALLOWED_ORIGINS — список из переменной окружения
+CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ALLOWED_ORIGINS',
-    'https://your-frontend.vercel.app,http://localhost:3000'
-).split(',')
+    default=['https://your-frontend.vercel.app', 'http://localhost:3000']
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
