@@ -4,19 +4,27 @@ import dj_database_url
 from dotenv import load_dotenv
 from datetime import timedelta
 
+# Загружаем переменные окружения из файла .env
+# Если .env находится в другом месте, укажите путь: load_dotenv(dotenv_path=BASE_DIR / '.env')
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = '%gwf)g($0bu$nl%-7y0*l3oj$sjw2d&--jf8&b@m!jse%+5^uk'
+# Получаем SECRET_KEY из окружения, если не найден — выбрасываем ошибку
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable is not set!")
 
+# DEBUG — преобразуем строку в булево значение
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
-# ALLOWED_HOSTS должен содержать домен Render вашего приложения
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'your-app-name.onrender.com').split(',')
+# ALLOWED_HOSTS — список, получаем из переменной окружения, разделённой запятыми
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if render_hostname:
+    ALLOWED_HOSTS.append(render_hostname)
 
 INSTALLED_APPS = [
-    # стандартные приложения Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -24,7 +32,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # ваши приложения
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
@@ -69,33 +76,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Подключение к базе данных Render через DATABASE_URL
+# Настройка базы данных, берём из DATABASE_URL с SSL и кэшированием соединения
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=True  # Render требует SSL
+        ssl_require=True
     )
 }
-DATABASE_URL = 'postgres://taimbook_user:D3tefheUgQwUlqmikWAsLkhY5aaenIvc@dpg-d15b3fje5dus739fk4hg-a:5432/taimbook'
-# Статические файлы
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Медиа файлы
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# CORS настройки — укажите домены фронтенда
+# CORS_ALLOWED_ORIGINS — список доменов фронтенда, разделённых запятыми
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'https://your-frontend.vercel.app,http://localhost:3000'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
-
-# Настройки REST Framework и JWT (оставьте как есть)
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -128,7 +132,6 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
 }
 
-# Лимиты загрузки файлов
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 
