@@ -79,7 +79,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': env.db(
         default=None,
-        conn_max_age=600,
         ssl_require=True
     )
 }
