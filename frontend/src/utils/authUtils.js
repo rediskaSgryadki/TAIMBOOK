@@ -1,6 +1,6 @@
 // Утилиты для аутентификации
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://taimbook-2.onrender.com';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 /**
  * Сохраняет данные аутентификации пользователя в sessionStorage.
@@ -166,3 +166,5 @@ export const executeRequestWithTokenRefresh = async (requestFn, navigate = null)
     throw error; // Если ошибка не связана с авторизацией - пробрасываем дальше
   }
 };
+
+export { API_BASE_URL };

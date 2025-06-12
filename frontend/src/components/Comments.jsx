@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import ReviewFormModal from './ReviewFormModal';
 import { filterBadWords } from '../utils/filterBadWords';
+import { API_BASE_URL } from '../utils/authUtils';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
-axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 
