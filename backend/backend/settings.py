@@ -1,28 +1,22 @@
 import os
 from pathlib import Path
-import environ
 from datetime import timedelta
 
-# Инициализация environ и загрузка .env файла
+# Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
-env = environ.Env(
-    DEBUG=(bool, False)
-)
-# Читаем .env (для локальной разработки)
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env('SECRET_KEY')  # обязательная переменная, ошибка если не задана
+# Секретный ключ (жёстко прописан)
+SECRET_KEY = "k7qo3qy%i8=81887f@q=%7%)n!+ra#t0%fucdc+3o_3g*&f*7e"
 
-DEBUG = env('DEBUG')
+# Режим отладки
+DEBUG = False
 
-# ALLOWED_HOSTS — список из переменной окружения, разделённой запятыми
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+# Разрешённые хосты
+ALLOWED_HOSTS = [
+    "taimbook-2.onrender.com",
+]
 
-# Добавляем хост Render, если переменная задана
-render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
-if render_hostname:
-    ALLOWED_HOSTS.append(render_hostname)
-
+# Приложения
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,10 +37,11 @@ INSTALLED_APPS = [
     'comments',
 ]
 
+# Middleware (corsheaders должен идти выше CommonMiddleware)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # для отдачи статики
-    'corsheaders.middleware.CorsMiddleware',       # должен идти выше CommonMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # отдача статики
+    'corsheaders.middleware.CorsMiddleware',       # CORS
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -75,29 +70,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# Подключение к базе данных через django-environ (DATABASE_URL из .env)
+# Настройки базы данных (PostgreSQL)
 DATABASES = {
-    'default': env.db(
-        default=None,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'taimbook',
+        'USER': 'taimbook_user',
+        'PASSWORD': 'D3tefheUgQwUlqmikWAsLkhY5aaenIvc',
+        'HOST': 'dpg-d15b3fje5dus739fk4hg-a.singapore-postgres.render.com',
+        'PORT': '5432',
+    }
 }
 
+# Статические файлы
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Медиа файлы
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# CORS_ALLOWED_ORIGINS — список из переменной окружения
-CORS_ALLOWED_ORIGINS = env.list(
-    'CORS_ALLOWED_ORIGINS',
-    default=['https://taimbook.vercel.app']
-)
+# CORS настройки
+CORS_ALLOWED_ORIGINS = [
+    "https://taimbook.vercel.app",
+    "taimbook123-rediskasgryadkis-projects.vercel.app",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization',
+]
+
+# Django REST Framework настройки
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -109,6 +118,7 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Настройки JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -129,7 +139,9 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
 }
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+# Максимальный размер загружаемых данных (50 МБ)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
+# Кастомная модель пользователя
 AUTH_USER_MODEL = 'users.User'
