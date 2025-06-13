@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from .models import Entry
 from .serializers import EntrySerializer
@@ -21,11 +21,23 @@ logger = logging.getLogger(__name__)
 
 class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
-    permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == 'public' or self.action == 'public_by_user':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return Entry.objects.filter(user=self.request.user).order_by('-created_at')
+        return Entry.objects.none()
 
-    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'])
     def public(self, request):
         """
         Возвращает все публичные записи всех пользователей.
@@ -40,8 +52,6 @@ class EntryViewSet(viewsets.ModelViewSet):
                 {"detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    def get_queryset(self):
-        return Entry.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         try:
@@ -198,7 +208,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             )
 
 class CoverListView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     def get(self, request):
         covers_dir = os.path.join(settings.MEDIA_ROOT, 'covers')
         covers = []
