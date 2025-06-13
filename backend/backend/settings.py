@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "k7qo3qy%i8=81887f@q=%7%)n!+ra#t0%fucdc+3o_3g*&f*7e")
 
 # Режим отладки
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+DEBUG = True
 
 # Разрешённые хосты
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
