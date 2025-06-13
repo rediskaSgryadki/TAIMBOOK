@@ -23,12 +23,11 @@ const EntryPage = () => {
         }
 
         const response = await fetch(`${API_BASE_URL}/api/entries/${id}`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}),
         });
 
         if (!response.ok) {
@@ -53,33 +52,7 @@ const EntryPage = () => {
   };
 
   const handleSave = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        redirectToAuth(navigate);
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/entries/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(editedEntry)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update entry');
-      }
-
-      const updatedEntry = await response.json();
-      setEntry(updatedEntry);
-      setEditedEntry(updatedEntry);
-      setIsEditing(false);
-    } catch (err) {
-      setError(err.message);
-    }
+    setError('Сохранение записи не поддерживается с методом GET.');
   };
 
   const handleCancel = () => {

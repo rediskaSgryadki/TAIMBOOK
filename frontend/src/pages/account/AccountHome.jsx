@@ -54,7 +54,7 @@ const AccountHome = () => {
     try {
       const token = getToken();
       // Direct call to user details to check PIN status
-      const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+      const response = await axios.get(`${API_BASE_URL}/api/users/me/`,
         { headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -146,7 +146,7 @@ const AccountHome = () => {
         return;
       }
 
-        const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+        const response = await axios.get(`${API_BASE_URL}/api/users/me/`,
           { headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -217,7 +217,7 @@ const AccountHome = () => {
         return;
       }
 
-      const response = await axios.post(`${API_BASE_URL}/api/entries/last/`, {},
+      const response = await axios.get(`${API_BASE_URL}/api/entries/last/`, {},
         { headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',

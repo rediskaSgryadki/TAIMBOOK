@@ -67,8 +67,9 @@ const Auth = () => {
       const token = getToken();
       if (token) {
         try {
-          const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
-            { headers: { Authorization: `Bearer ${token}` } });
+          const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           if (response.data.has_pin) {
             setShowPinForm(true);
           } else {
@@ -116,8 +117,9 @@ const Auth = () => {
       if ((response.data.access || response.data.token) && response.data.user) {
         setAuthData(response.data);
         const token = response.data.access || response.data.token;
-        const pinResponse = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
-          { headers: { Authorization: `Bearer ${token}` } });
+        const pinResponse = await axios.get(`${API_BASE_URL}/api/users/me/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (pinResponse.data.has_pin) {
           setShowPinForm(true);
         } else {
@@ -203,12 +205,12 @@ const Auth = () => {
                   />
                 </div>
               )}
-              <div> {/* Use div for consistent spacing */}
-                <label htmlFor="email-address" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Email
                 </label>
                 <input
-                  id="email-address"
+                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -219,7 +221,6 @@ const Auth = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              {/* Пароль */}
               <PasswordInput
                 id="password"
                 name="password"
@@ -229,28 +230,26 @@ const Auth = () => {
                 showPassword={showPassword}
                 setShowPassword={setShowPassword}
               />
-              {/* Подтверждение пароля при регистрации */}
               {!isLogin && (
                 <PasswordInput
-                  id="confirm-password"
-                  name="confirm-password"
+                  id="confirmPassword"
+                  name="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Повторить пароль"
+                  placeholder="Подтвердите пароль"
                   showPassword={showConfirmPassword}
                   setShowPassword={setShowConfirmPassword}
                   autoComplete="new-password"
                 />
               )}
             </div>
-
             <div>
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--color-green)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600"
               >
-                {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
+                {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
               </button>
             </div>
           </form>

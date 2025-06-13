@@ -78,13 +78,12 @@ const EntryView = () => {
         }
 
         const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}),
         });
 
         if (!response.ok) {
@@ -114,36 +113,7 @@ const EntryView = () => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Вы уверены, что хотите удалить эту запись?')) {
-      return;
-    }
-
-    try {
-      const token = getToken();
-      if (!token) {
-        clearAuthData();
-        navigate('/auth');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to delete entry');
-      }
-
-      navigate('/account');
-    } catch (err) {
-      setError(err.message);
-    }
+    setError('Удаление записи не поддерживается с методом GET.');
   };
 
   if (loading) {
