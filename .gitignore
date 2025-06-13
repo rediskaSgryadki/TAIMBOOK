@@ -8,7 +8,6 @@ __pycache__/
 
 # Node/React
 node_modules/
-build/
 dist/
 
 # IDE

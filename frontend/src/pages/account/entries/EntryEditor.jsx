@@ -121,7 +121,15 @@ const EntryEditor = () => {
   const fetchAddressByCoords = async (coords) => {
     if (!yandexApiKey) return '';
     try {
-      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${yandexApiKey}&format=json&geocode=${coords[1]},${coords[0]}`);
+      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apikey: yandexApiKey,
+          format: 'json',
+          geocode: `${coords[1]},${coords[0]}`
+        })
+      });
       const data = await response.json();
       const firstResult = data.response.GeoObjectCollection.featureMember[0];
       if (firstResult) {
@@ -139,7 +147,15 @@ const EntryEditor = () => {
       return;
     }
     try {
-      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${yandexApiKey}&format=json&geocode=${encodeURIComponent(localSearchQuery)}`);
+      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apikey: yandexApiKey,
+          format: 'json',
+          geocode: localSearchQuery
+        })
+      });
       if (!response.ok) {
         throw new Error('Ошибка запроса к Яндекс.Картам');
       }

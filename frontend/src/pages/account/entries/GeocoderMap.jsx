@@ -15,7 +15,15 @@ const GeocoderMap = () => {
     setAddress('');
     try {
       const response = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(query)}`
+        `https://geocode-maps.yandex.ru/1.x/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apikey: YANDEX_API_KEY,
+            format: 'json',
+            geocode: query
+          })
+        }
       );
       const data = await response.json();
       const firstResult = data.response.GeoObjectCollection.featureMember[0];
