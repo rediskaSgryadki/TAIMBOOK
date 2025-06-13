@@ -23,9 +23,12 @@ const EntryPage = () => {
         }
 
         const response = await fetch(`${API_BASE_URL}/api/entries/${id}`, {
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) {

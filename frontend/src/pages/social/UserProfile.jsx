@@ -21,12 +21,20 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/users/by_username/?username=${encodeURIComponent(username)}`);
+        const response = await fetch(`${API_BASE_URL}/api/users/by_username/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username })
+        });
         if (!response.ok) throw new Error('Ошибка загрузки пользователя');
         const userData = await response.json();
         setUser(userData);
         // Теперь загрузим записи
-        const entriesRes = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
+        const entriesRes = await fetch(`${API_BASE_URL}/api/entries/public_by_user/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userData.id })
+        });
         if (!entriesRes.ok) throw new Error('Ошибка загрузки записей');
         setPublicEntries(await entriesRes.json());
       } catch (err) {

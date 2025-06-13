@@ -81,11 +81,13 @@ const EntryEditor = () => {
           return;
         }
         const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({}),
         });
         if (!response.ok) {
           const errorData = await response.json();

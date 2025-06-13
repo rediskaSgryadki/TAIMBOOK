@@ -21,9 +21,12 @@ const Social = () => {
     const fetchPosts = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/entries/public/`, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             Accept: 'application/json',
           },
+          body: JSON.stringify({}), // Отправляем пустое тело, если нет конкретных параметров
         })
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))

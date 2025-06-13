@@ -31,9 +31,8 @@ const Profile = () => {
           return;
         }
 
-        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+          { headers: { Authorization: `Bearer ${token}` } });
         
         setUser(response.data);
       } catch (error) {
@@ -84,7 +83,11 @@ const Profile = () => {
       if (userData?.id) {
         try {
           setLoading(true);
-          const response = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userData.id}`);
+          const response = await fetch(`${API_BASE_URL}/api/entries/public_by_user/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: userData.id })
+          });
           
           if (!response.ok) {
             throw new Error('Failed to fetch public entries');

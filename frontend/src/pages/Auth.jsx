@@ -67,9 +67,8 @@ const Auth = () => {
       const token = getToken();
       if (token) {
         try {
-          const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+            { headers: { Authorization: `Bearer ${token}` } });
           if (response.data.has_pin) {
             setShowPinForm(true);
           } else {
@@ -117,9 +116,8 @@ const Auth = () => {
       if ((response.data.access || response.data.token) && response.data.user) {
         setAuthData(response.data);
         const token = response.data.access || response.data.token;
-        const pinResponse = await axios.get(`${API_BASE_URL}/api/users/me/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const pinResponse = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+          { headers: { Authorization: `Bearer ${token}` } });
         if (pinResponse.data.has_pin) {
           setShowPinForm(true);
         } else {

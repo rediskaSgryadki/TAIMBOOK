@@ -23,9 +23,12 @@ const EmotionCard = () => {
       setError('');
       const response = await executeRequestWithTokenRefresh(async () => {
         const res = await fetch(`${API_BASE_URL}/api/emotions/stats/day/`, {
+          method: 'POST',
           headers: {
-            'Authorization': `Bearer ${getToken()}`
-          }
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}),
         });
         if (!res.ok) {
           throw new Error('Ошибка получения статистики эмоций');

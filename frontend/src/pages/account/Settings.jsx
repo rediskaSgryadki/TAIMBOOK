@@ -112,9 +112,8 @@ const ProfileSettings = () => {
           return;
         }
 
-        const response = await axios.get(`${API_BASE_URL}/api/users/me/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await axios.post(`${API_BASE_URL}/api/users/me/`, {},
+          { headers: { Authorization: `Bearer ${token}` } });
         
         setUserData(response.data);
         setName(response.data.username || '');
@@ -533,10 +532,10 @@ const ProfileSettings = () => {
                       )}
                       {pinStep === 2 && (
                         <>
-                          <div>
+                      <div>
                             <label htmlFor="pinCodeNew" className="block text-sm font-medium mb-1">
-                              Введите новый пин-код
-                            </label>
+                          Введите новый пин-код
+                        </label>
                             <div className="relative">
                               <PasswordInput
                                 id="pinCodeNew"
@@ -545,7 +544,7 @@ const ProfileSettings = () => {
                                 onChange={e => setPinCodeNew(e.target.value)}
                                 show={showPinCodeNew}
                                 setShow={setShowPinCodeNew}
-                                placeholder="Новый пин-код"
+                          placeholder="Новый пин-код"
                               />
                             </div>
                           </div>
@@ -562,18 +561,18 @@ const ProfileSettings = () => {
                                 show={showPinCodeNewConfirm}
                                 setShow={setShowPinCodeNewConfirm}
                                 placeholder="Повторите новый пин-код"
-                              />
+                        />
                             </div>
                           </div>
-                          <button
+                      <button 
                             onClick={handleChangePin}
-                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
-                          >
-                            Сохранить пин-код
-                          </button>
+                        className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                      >
+                        Сохранить пин-код
+                      </button>
                         </>
                       )}
-                    </div>
+                      </div>
                   </div>
                 )}
                 </div>

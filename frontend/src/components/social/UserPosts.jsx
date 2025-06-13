@@ -28,7 +28,8 @@ const UserPosts = ({ post }) => {
 
   const fetchLikeCount = async (postId) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/like/${postId}/count/`)
+      const res = await axios.post(`${API_BASE_URL}/api/like/${postId}/count/`, {},
+        { headers: { Authorization: `Bearer ${getToken()}` } })
       setLikes(res.data.count)
     } catch {}
   }
@@ -62,7 +63,8 @@ const UserPosts = ({ post }) => {
   const fetchComments = async (postId) => {
     setCommentsLoading(true)
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/comments/${postId}/`)
+      const res = await axios.post(`${API_BASE_URL}/api/comments/${postId}/`, {},
+        { headers: { Authorization: `Bearer ${getToken()}` } })
       setComments(res.data)
     } catch {}
     setCommentsLoading(false)

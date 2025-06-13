@@ -14,7 +14,7 @@ const Comments = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await axios.get('/api/reviews/');
+        const response = await axios.post(`${API_BASE_URL}/api/reviews/`, {});
         if (Array.isArray(response.data)) {
           setReviews(response.data);
         } else {
