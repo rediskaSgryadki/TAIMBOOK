@@ -317,7 +317,7 @@ const EntryEditor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowPreviewModal(true);
+    handleFinalSubmit(); // Просто вызываем handleFinalSubmit напрямую
   };
 
   const handleFinalSubmit = async () => {
@@ -344,6 +344,7 @@ const EntryEditor = () => {
       if (entry.coverImage) {
         formData.append('cover_image', entry.coverImage);
       } else if (entry.coverImagePath) {
+        // Если изображение не менялось, но уже есть путь, отправляем путь
         formData.append('cover_image', entry.coverImagePath);
       }
       formData.append('hashtags', entry.hashtags);
@@ -357,6 +358,7 @@ const EntryEditor = () => {
         method: isEditMode ? 'PUT' : 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          // 'Content-Type': 'multipart/form-data' // Fetch API автоматически установит Content-Type для FormData
         },
         body: formData
       });
@@ -374,7 +376,6 @@ const EntryEditor = () => {
       setError(err.message);
     } finally {
       setIsUploading(false);
-      setShowPreviewModal(false);
     }
   };
   
@@ -459,52 +460,50 @@ const EntryEditor = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Title and Date */}
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
-                <input
-                  type="text"
-                  id="title"
-                  value={entry.title}
-                  onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
-                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
-                <input
-                  type="date"
-                  id="date"
-                  value={entry.date}
-                  onChange={handleDateChange}
-                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                  required
-                />
-              </div>
-            </div>
+          {/* Title */}
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
+            <input
+              type="text"
+              id="title"
+              value={entry.title}
+              onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
+              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+              required
+            />
+          </div>
 
-            {/* Cover Image */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Обложка</label>
-              {entry.coverPreview && ( // Show preview if available
-                <img src={entry.coverPreview} alt="Обложка" className="mt-2 w-full h-48 object-cover rounded-lg" />
-              )}
-              <input
-                type="file"
-                id="coverImageInput"
-                accept="image/*"
-                onChange={handleCoverImageChange}
-                className="w-full text-sm text-neutral-700 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-200 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
-              />
-              {isUploading && <p className="text-sm text-gray-500">Обработка изображения...</p>}
-            </div>
+          {/* Date */}
+          <div>
+            <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
+            <input
+              type="date"
+              id="date"
+              value={entry.date}
+              onChange={handleDateChange}
+              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+              required
+            />
+          </div>
+
+          {/* Cover Image */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Обложка</label>
+            {entry.coverPreview && (
+              <img src={entry.coverPreview} alt="Обложка" className="mt-2 w-full h-48 object-cover rounded-lg" />
+            )}
+            <input
+              type="file"
+              id="coverImageInput"
+              accept="image/*"
+              onChange={handleCoverImageChange}
+              className="w-full text-sm text-neutral-700 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-200 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
+            />
+            {isUploading && <p className="text-sm text-gray-500">Обработка изображения...</p>}
           </div>
 
           {/* Location */}
-          <div className="space-y-4">
+          <div>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300">Местоположение</h3>
               <button
@@ -541,12 +540,12 @@ const EntryEditor = () => {
                   <YMaps query={{ apikey: yandexApiKey }}>
                     <Map
                       defaultState={{ center: mapCenter, zoom: 15 }}
-                      state={{ center: mapCenter, zoom: 15 }} // Управляем состоянием карты
+                      state={{ center: mapCenter, zoom: 15 }} 
                       width="100%" height="100%"
                       onClick={handleMapClick}
                       instanceRef={mapRef}
                     >
-                      {entry.location && <Placemark geometry={[entry.location.latitude, entry.location.longitude]} />}
+                      {entry.location && <Placemark geometry={[entry.location.latitude, entry.location.longitude]} />} 
                     </Map>
                   </YMaps>
                 </div>
@@ -555,9 +554,9 @@ const EntryEditor = () => {
           </div>
 
           {/* Content */}
-          <div className="space-y-4">
+          <div>
             <label htmlFor="content" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Содержание</label>
-            <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
+            <div className="mt-1 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
                 initialValue={entry.content}
@@ -613,7 +612,6 @@ const EntryEditor = () => {
                         setShowBadWordsModal(true);
                       }
                     });
-                    // Register the custom map icon
                     editor.ui.registry.addIcon('customMapIcon', '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">\n  <path \n    fill-rule="evenodd" \n    d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.5.5 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103M10 1.91l-4-.8v12.98l4 .8zm1 12.98 4-.8V1.11l-4 .8zm-6-.8V1.11l-4 .8v12.98z"\n    stroke="currentColor"\n    stroke-width="0.8"\n    stroke-linejoin="round"\n  />\n</svg>');
 
                     editor.ui.registry.addButton('mapButton', {
@@ -633,7 +631,7 @@ const EntryEditor = () => {
           </div>
 
           {/* Hashtags */}
-          <div className="space-y-4">
+          <div>
             <label htmlFor="hashtags" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Хэштеги</label>
             <input
               type="text"
@@ -641,7 +639,7 @@ const EntryEditor = () => {
               value={entry.hashtags}
               onChange={handleHashtagsChange}
               placeholder="Введите хэштеги через запятую, например: мысли, вдохновение"
-              className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
             />
             <p className="text-xs text-gray-500 mt-1">
               Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
@@ -649,22 +647,23 @@ const EntryEditor = () => {
           </div>
 
           {/* Public Toggle */}
-          <div className="space-y-4">
-            <label htmlFor="is-public" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Публичная запись</label>
+          <div className="flex items-center">
             <input
-              type="checkbox"
               id="is-public"
+              type="checkbox"
               checked={entry.isPublic}
               onChange={handlePublicToggle}
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded"
             />
+            <label htmlFor="is-public" className="ml-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Сделать запись публичной</label>
           </div>
 
           {/* Submit */}
-          <div className="space-y-4">
+          <div>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              disabled={isUploading}
             >
               {isUploading ? 'Сохранение...' : (isEditMode ? 'Сохранить изменения' : 'Создать запись')}
             </button>
