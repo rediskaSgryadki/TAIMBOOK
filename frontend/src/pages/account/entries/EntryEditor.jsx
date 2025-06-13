@@ -317,7 +317,7 @@ const EntryEditor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    handleFinalSubmit(); // Просто вызываем handleFinalSubmit напрямую
+    setShowPreviewModal(true);
   };
 
   const handleFinalSubmit = async () => {
@@ -344,7 +344,6 @@ const EntryEditor = () => {
       if (entry.coverImage) {
         formData.append('cover_image', entry.coverImage);
       } else if (entry.coverImagePath) {
-        // Если изображение не менялось, но уже есть путь, отправляем путь
         formData.append('cover_image', entry.coverImagePath);
       }
       formData.append('hashtags', entry.hashtags);
@@ -358,7 +357,6 @@ const EntryEditor = () => {
         method: isEditMode ? 'PUT' : 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          // 'Content-Type': 'multipart/form-data' // Fetch API автоматически установит Content-Type для FormData
         },
         body: formData
       });
@@ -376,6 +374,7 @@ const EntryEditor = () => {
       setError(err.message);
     } finally {
       setIsUploading(false);
+      setShowPreviewModal(false);
     }
   };
   
@@ -444,10 +443,7 @@ const EntryEditor = () => {
       <AccountHeader />
       <AccountMenu/>
       <div className='w-full space-y-10 h-screen mt-12 px-7 md:px-20'>
-        <div className="card w-full py-10 rounded-2xl md:rounded-full text-center welcome-section profile-welcome-bg">
-            <p className="text-center text-xl zag">{isEditMode ? 'Редактировать запись' : 'Новая запись'}</p>
-        </div>
-
+        
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <span className="block sm:inline">{error}</span>
@@ -460,50 +456,52 @@ const EntryEditor = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
-            <input
-              type="text"
-              id="title"
-              value={entry.title}
-              onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
-              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-              required
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Title and Date */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
+                <input
+                  type="text"
+                  id="title"
+                  value={entry.title}
+                  onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
+                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
+                <input
+                  type="date"
+                  id="date"
+                  value={entry.date}
+                  onChange={handleDateChange}
+                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                  required
+                />
+              </div>
+            </div>
 
-          {/* Date */}
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
-            <input
-              type="date"
-              id="date"
-              value={entry.date}
-              onChange={handleDateChange}
-              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-              required
-            />
-          </div>
-
-          {/* Cover Image */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Обложка</label>
-            {entry.coverPreview && (
-              <img src={entry.coverPreview} alt="Обложка" className="mt-2 w-full h-48 object-cover rounded-lg" />
-            )}
-            <input
-              type="file"
-              id="coverImageInput"
-              accept="image/*"
-              onChange={handleCoverImageChange}
-              className="w-full text-sm text-neutral-700 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-200 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
-            />
-            {isUploading && <p className="text-sm text-gray-500">Обработка изображения...</p>}
+            {/* Cover Image */}
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Обложка</label>
+              {entry.coverPreview && ( // Show preview if available
+                <img src={entry.coverPreview} alt="Обложка" className="mt-2 w-full h-48 object-cover rounded-lg" />
+              )}
+              <input
+                type="file"
+                id="coverImageInput"
+                accept="image/*"
+                onChange={handleCoverImageChange}
+                className="w-full text-sm text-neutral-700 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-200 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
+              />
+              {isUploading && <p className="text-sm text-gray-500">Обработка изображения...</p>}
+            </div>
           </div>
 
           {/* Location */}
-          <div>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300">Местоположение</h3>
               <button
@@ -554,9 +552,9 @@ const EntryEditor = () => {
           </div>
 
           {/* Content */}
-          <div>
+          <div className="space-y-4">
             <label htmlFor="content" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Содержание</label>
-            <div className="mt-1 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
+            <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
                 initialValue={entry.content}
@@ -631,7 +629,7 @@ const EntryEditor = () => {
           </div>
 
           {/* Hashtags */}
-          <div>
+          <div className="space-y-4">
             <label htmlFor="hashtags" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Хэштеги</label>
             <input
               type="text"
@@ -662,8 +660,7 @@ const EntryEditor = () => {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-              disabled={isUploading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
             >
               {isUploading ? 'Сохранение...' : (isEditMode ? 'Сохранить изменения' : 'Создать запись')}
             </button>
