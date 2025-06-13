@@ -15,7 +15,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "k7qo3qy%i8=81887f@q=%7%)n!+ra#t0%fucdc+3o_
 DEBUG = True
 
 # Разрешённые хосты
-ALLOWED_HOSTS = "taimbook-2.onrender.com"
+import os
+
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
+
 
 # Приложения
 INSTALLED_APPS = [
