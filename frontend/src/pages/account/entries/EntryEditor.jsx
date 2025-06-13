@@ -457,101 +457,43 @@ const EntryEditor = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Title and Date */}
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
-                <input
-                  type="text"
-                  id="title"
-                  value={entry.title}
-                  onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
-                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
-                <input
-                  type="date"
-                  id="date"
-                  value={entry.date}
-                  onChange={handleDateChange}
-                  className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Cover Image */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Обложка</label>
-              {entry.coverPreview && ( // Show preview if available
-                <img src={entry.coverPreview} alt="Обложка" className="mt-2 w-full h-48 object-cover rounded-lg" />
-              )}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Заголовок</label>
               <input
-                type="file"
-                id="coverImageInput"
-                accept="image/*"
-                onChange={handleCoverImageChange}
-                className="w-full text-sm text-neutral-700 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900 file:text-indigo-700 dark:file:text-indigo-200 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
+                type="text"
+                id="title"
+                value={entry.title}
+                onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
+                className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                required
               />
-              {isUploading && <p className="text-sm text-gray-500">Обработка изображения...</p>}
+            </div>
+            <div>
+              <label htmlFor="date" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Дата</label>
+              <input
+                type="date"
+                id="date"
+                value={entry.date}
+                onChange={handleDateChange}
+                className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                required
+              />
             </div>
           </div>
 
-          {/* Location */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300">Местоположение</h3>
-              <button
-                type="button"
-                onClick={() => setShowMap(!showMap)}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                {showMap ? 'Скрыть карту' : 'Показать карту'}
-              </button>
-            </div>
-            {showMap && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={localSearchQuery}
-                    onChange={handleLocalSearchChange}
-                    onKeyDown={handleLocalKeyDown}
-                    placeholder="Поиск места..."
-                    className="flex-1 p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleLocalSearchSubmit}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Найти
-                  </button>
-                </div>
-                {entry.location && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Выбрано: {entry.location.name} ({entry.location.latitude}, {entry.location.longitude})</p>
-                )}
-                <div style={{ width: '100%', height: '400px' }}>
-                  <YMaps query={{ apikey: yandexApiKey }}>
-                    <Map
-                      defaultState={{ center: mapCenter, zoom: 15 }}
-                      state={{ center: mapCenter, zoom: 15 }} 
-                      width="100%" height="100%"
-                      onClick={handleMapClick}
-                      instanceRef={mapRef}
-                    >
-                      {entry.location && <Placemark geometry={[entry.location.latitude, entry.location.longitude]} />} 
-                    </Map>
-                  </YMaps>
-                </div>
-              </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowMap(true)}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              {entry.location ? 'Изменить местоположение' : 'Добавить местоположение'}
+            </button>
+            {entry.location && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Выбрано: {entry.location.name}</p>
             )}
           </div>
 
-          {/* Content */}
           <div className="space-y-4">
             <label htmlFor="content" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Содержание</label>
             <div className="border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden h-[50vh] 2xl:h-[70vh] dark:bg-neutral-700">
@@ -615,7 +557,7 @@ const EntryEditor = () => {
                     editor.ui.registry.addButton('mapButton', {
                       icon: 'customMapIcon',
                       onAction: function() {
-                        setShowMap(true);
+                        setShowMap(true); // Now opens the map modal
                       }
                     });
                   },
@@ -628,35 +570,6 @@ const EntryEditor = () => {
             </div>
           </div>
 
-          {/* Hashtags */}
-          <div className="space-y-4">
-            <label htmlFor="hashtags" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Хэштеги</label>
-            <input
-              type="text"
-              id="hashtags"
-              value={entry.hashtags}
-              onChange={handleHashtagsChange}
-              placeholder="Введите хэштеги через запятую, например: мысли, вдохновение"
-              className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
-            </p>
-          </div>
-
-          {/* Public Toggle */}
-          <div className="flex items-center">
-            <input
-              id="is-public"
-              type="checkbox"
-              checked={entry.isPublic}
-              onChange={handlePublicToggle}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-neutral-300 rounded"
-            />
-            <label htmlFor="is-public" className="ml-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Сделать запись публичной</label>
-          </div>
-
-          {/* Submit */}
           <div>
             <button
               type="submit"
@@ -690,22 +603,7 @@ const EntryEditor = () => {
             }} onMore={handleClosePreview} />
 
             <div className="space-y-4 mb-6 mt-6">
-              <div>
-                <label className="text block text-sm">
-                  Хэштеги
-                </label>
-                <input
-                  type="text"
-                  value={entry.hashtags}
-                  onChange={(e) => setEntry(prev => ({ ...prev, hashtags: e.target.value }))}
-                  placeholder="Введите хэштеги через запятую, например: мысли, вдохновение"
-                  className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
-                </p>
-              </div>
-
+              {/* Cover Image in Preview Modal */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Обложка
@@ -744,6 +642,24 @@ const EntryEditor = () => {
                 </div>
               </div>
 
+              {/* Hashtags in Preview Modal */}
+              <div>
+                <label className="text block text-sm">
+                  Хэштеги
+                </label>
+                <input
+                  type="text"
+                  value={entry.hashtags}
+                  onChange={(e) => setEntry(prev => ({ ...prev, hashtags: e.target.value }))}
+                  placeholder="Введите хэштеги через запятую, например: мысли, вдохновение"
+                  className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
+                </p>
+              </div>
+
+              {/* Public Toggle in Preview Modal */}
               <div className="flex items-center">
                 <input
                   id="is-public"
@@ -774,6 +690,69 @@ const EntryEditor = () => {
               >
                 {isUploading ? 'Сохранение...' : (isEditMode ? 'Сохранить изменения' : 'Создать запись')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMap && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:text-white">
+          <div className="bg-white dark:bg-neutral-800 rounded-3xl p-6 w-full max-w-xl max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="zag text-xl">Выбор местоположения</h2>
+              <button
+                onClick={() => setShowMap(false)}
+                className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={localSearchQuery}
+                    onChange={handleLocalSearchChange}
+                    onKeyDown={handleLocalKeyDown}
+                    placeholder="Поиск места..."
+                    className="flex-1 p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLocalSearchSubmit}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Найти
+                  </button>
+                </div>
+                {entry.location && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Выбрано: {entry.location.name} ({entry.location.latitude}, {entry.location.longitude})</p>
+                )}
+                <div style={{ width: '100%', height: '400px' }}>
+                  <YMaps query={{ apikey: yandexApiKey }}>
+                    <Map
+                      defaultState={{ center: mapCenter, zoom: 15 }}
+                      state={{ center: mapCenter, zoom: 15 }} 
+                      width="100%" height="100%"
+                      onClick={handleMapClick}
+                      instanceRef={mapRef}
+                    >
+                      {entry.location && <Placemark geometry={[entry.location.latitude, entry.location.longitude]} />} 
+                    </Map>
+                  </YMaps>
+                </div>
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={() => setShowMap(false)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        Закрыть
+                    </button>
+                </div>
             </div>
           </div>
         </div>

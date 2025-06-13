@@ -70,12 +70,11 @@ const Emotions = () => {
         try {
           const response = await executeRequestWithTokenRefresh(async () => {
             const res = await fetch(`${API_BASE_URL}/api/emotions/stats/${period}/`, {
-              method: 'POST',
+              method: 'GET',
               headers: {
                 'Authorization': `Bearer ${getToken()}`,
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({}),
             });
 
             if (!res.ok) throw new Error(`Failed to fetch ${period} stats`);
@@ -108,12 +107,11 @@ const Emotions = () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
         const res = await fetch(`${API_BASE_URL}/api/emotions/stats/current_month/`, {
-          method: 'POST',
+          method: 'GET',
           headers: { 
             'Authorization': `Bearer ${getToken()}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}),
         });
         if (!res.ok) throw new Error('Failed to fetch current month stats');
         return res.json();
@@ -132,12 +130,11 @@ const Emotions = () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
         const res = await fetch(`${API_BASE_URL}/api/emotions/stats/all_time/`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${getToken()}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}),
         });
         if (!res.ok) throw new Error('Failed to fetch all time stats');
         return res.json();
@@ -156,12 +153,11 @@ const Emotions = () => {
     try {
       const response = await executeRequestWithTokenRefresh(async () => {
         const res = await fetch(`${API_BASE_URL}/api/emotions/stats/last_month/`, {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${getToken()}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}),
         });
         if (!res.ok) throw new Error('Failed to fetch last month stats');
         return res.json();
@@ -179,6 +175,7 @@ const Emotions = () => {
 
   useEffect(() => {
     fetchEmotionStats(true);
+    fetchCurrentMonthStats();
     fetchLastMonthStats();
     fetchAllTimeStats();
   }, []);
