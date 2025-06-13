@@ -1,20 +1,21 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Секретный ключ (жёстко прописан)
-SECRET_KEY = "k7qo3qy%i8=81887f@q=%7%)n!+ra#t0%fucdc+3o_3g*&f*7e"
+SECRET_KEY = os.getenv("SECRET_KEY", "k7qo3qy%i8=81887f@q=%7%)n!+ra#t0%fucdc+3o_3g*&f*7e")
 
 # Режим отладки
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 # Разрешённые хосты
-ALLOWED_HOSTS = [
-    "taimbook-2.onrender.com",
-]
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
 
 # Приложения
 INSTALLED_APPS = [
@@ -74,11 +75,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'taimbook',
-        'USER': 'taimbook_user',
-        'PASSWORD': 'D3tefheUgQwUlqmikWAsLkhY5aaenIvc',
-        'HOST': 'dpg-d15b3fje5dus739fk4hg-a.singapore-postgres.render.com',
-        'PORT': '5432',
+        'NAME': os.getenv("DB_NAME", "taimbook"),
+        'USER': os.getenv("DB_USER", "taimbook_user"),
+        'PASSWORD': os.getenv("DB_PASSWORD", "D3tefheUgQwUlqmikWAsLkhY5aaenIvc"),
+        'HOST': os.getenv("DB_HOST", "dpg-d15b3fje5dus739fk4hg-a.singapore-postgres.render.com"),
+        'PORT': os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -93,9 +94,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS настройки
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else [
     "https://taimbook.vercel.app",
-    "taimbook123-rediskasgryadkis-projects.vercel.app",
+    "https://taimbook123-rediskasgryadkis-projects.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
