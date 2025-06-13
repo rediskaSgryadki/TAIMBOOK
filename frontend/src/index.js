@@ -18,6 +18,9 @@ axios.interceptors.request.use(
     if (token) {
       console.log('Adding token to request:', config.url);
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Request headers after adding token:', config.headers);
+    } else {
+      console.log('No token found for request:', config.url);
     }
     return config;
   },

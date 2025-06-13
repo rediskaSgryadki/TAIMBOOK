@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AccountHeader from '../../components/account/AccountHeader'
 import axios from 'axios'
-import { getToken, setAuthData } from '../../utils/authUtils'
+import { getToken, setAuthData, clearAuthData } from '../../utils/authUtils'
 import { useTheme } from '../../context/ThemeContext'
 import AccountMenu from '../../components/account/AccountMenu'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
@@ -149,10 +149,13 @@ const ProfileSettings = () => {
     
     try {
       const token = getToken();
-      const response = await axios.get(`${API_BASE_URL}/api/users/me/?username=${encodeURIComponent(name)}`, {
+      const formData = new FormData();
+      formData.append('username', name);
+      
+      const response = await axios.patch(`${API_BASE_URL}/api/users/me/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       });
       setUserData(response.data);
@@ -176,12 +179,24 @@ const ProfileSettings = () => {
     
     try {
       const token = getToken();
-      // For file uploads, GET method is not suitable. 
-      // I will remove this block since GET cannot handle file uploads.
-      // If file upload is needed, this functionality will be broken.
-      // If you still want to proceed, I will remove this block, otherwise, let me know.
-      setErrorMessage('Обновление фото профиля не поддерживается с методом GET.');
-      setLoading(false);
+      const formData = new FormData();
+      if (profilePhoto) {
+        formData.append('profile_photo', profilePhoto);
+      }
+      
+      const response = await axios.patch(`${API_BASE_URL}/api/users/me/`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setUserData(response.data);
+      // Update photo preview with the new URL from the response
+      setPhotoPreview(response.data.profile_photo_url ? `${API_BASE_URL}${response.data.profile_photo_url}` : '');
+      // Update user data in localStorage after successful photo update
+      setAuthData({ user: response.data });
+      setSuccessMessage('Фото профиля успешно обновлено');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Ошибка обновления фото профиля:', error);
       setErrorMessage('Не удалось обновить фото профиля. Пожалуйста, попробуйте позже.');
@@ -204,7 +219,10 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      await axios.get(`${API_BASE_URL}/api/users/change-password/?old_password=${encodeURIComponent(oldPassword)}&new_password=${encodeURIComponent(newPassword)}`, {
+      await axios.post(`${API_BASE_URL}/api/users/change-password/`, {
+        old_password: oldPassword,
+        new_password: newPassword
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccessMessage('Пароль успешно изменён.');
@@ -234,7 +252,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      const response = await axios.get(`${API_BASE_URL}/api/users/check_pin/?old_pin=${encodeURIComponent(pinOld)}`, {
+      const response = await axios.post(`${API_BASE_URL}/api/users/check_pin/`, { pin_code: pinOld }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -269,7 +287,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      await axios.get(`${API_BASE_URL}/api/users/set_pin/?new_pin=${encodeURIComponent(pinCodeNew)}`, {
+      await axios.post(`${API_BASE_URL}/api/users/set_pin/`, { new_pin: pinCodeNew }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccessMessage('Пин-код успешно изменён.');
@@ -298,7 +316,7 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
-      const response = await axios.get(`${API_BASE_URL}/api/users/clear_pin/?old_pin=${encodeURIComponent(pinOld)}`, {
+      const response = await axios.post(`${API_BASE_URL}/api/users/clear_pin/`, { old_pin: pinOld }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -333,10 +351,14 @@ const ProfileSettings = () => {
       setLoading(true);
       try {
         const token = getToken();
-        // Deleting account with GET is not standard and will likely fail.
-        // I will remove this block as GET is not suitable for deletion.
-        setErrorMessage('Удаление аккаунта не поддерживается с методом GET.');
-        setLoading(false);
+        await axios.delete(`${API_BASE_URL}/api/users/me/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        clearAuthData();
+        setSuccessMessage('Аккаунт успешно удален.');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
       } catch (error) {
         setErrorMessage(error?.response?.data?.detail || 'Не удалось удалить аккаунт.');
       } finally {

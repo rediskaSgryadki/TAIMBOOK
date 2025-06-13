@@ -81,12 +81,13 @@ const EntryEditor = () => {
           return;
         }
         const response = await fetch(`${API_BASE_URL}/api/entries/${id}/`, {
-          method: 'GET',
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
+          body: JSON.stringify({}),
         });
         if (!response.ok) {
           const errorData = await response.json();
@@ -120,9 +121,14 @@ const EntryEditor = () => {
   const fetchAddressByCoords = async (coords) => {
     if (!yandexApiKey) return '';
     try {
-      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${yandexApiKey}&format=json&geocode=${encodeURIComponent(`${coords[1]},${coords[0]}`)}`, {
-        method: 'GET',
+      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apikey: yandexApiKey,
+          format: 'json',
+          geocode: `${coords[1]},${coords[0]}`
+        })
       });
       const data = await response.json();
       const firstResult = data.response.GeoObjectCollection.featureMember[0];
@@ -141,9 +147,14 @@ const EntryEditor = () => {
       return;
     }
     try {
-      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${yandexApiKey}&format=json&geocode=${encodeURIComponent(localSearchQuery)}`, {
-        method: 'GET',
+      const response = await fetch(`https://geocode-maps.yandex.ru/1.x/`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apikey: yandexApiKey,
+          format: 'json',
+          geocode: localSearchQuery
+        })
       });
       if (!response.ok) {
         throw new Error('Ошибка запроса к Яндекс.Картам');
@@ -247,36 +258,53 @@ const EntryEditor = () => {
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to Blob and then to Base64 (for potential future POST/PUT with binary data)
+        // Export canvas as JPEG with lower quality
+        // Use file.type for the format, fallback to 'image/jpeg'
+        const outputFormat = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const quality = 0.8; // Compression quality (0.0 to 1.0)
+
         canvas.toBlob((blob) => {
           if (blob) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setEntry(prev => ({
-                ...prev,
-                coverImage: blob, // Store blob for actual upload
-                coverPreview: reader.result, // Store base64 for preview
-              }));
-              setIsUploading(false);
-            };
-            reader.readAsDataURL(blob); // Read as DataURL for preview
+            // Create a new File object from the blob
+            const compressedFile = new File([blob], file.name, { type: outputFormat, lastModified: Date.now() });
+
+            setEntry(prev => ({
+              ...prev,
+              coverImage: compressedFile, // Use the compressed file for upload
+              coverPreview: originalDataUrl // Use original Data URL for preview (or compressed Data URL if preferred)
+            }));
           } else {
-            setError('Не удалось обработать изображение.');
-            setIsUploading(false);
+            setError('Ошибка при сжатии изображения.');
+            setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
           }
-        }, 'image/jpeg', 0.8);
+          setIsUploading(false); // Processing finished
+        }, outputFormat, quality);
       };
+
       img.onerror = () => {
-        setError('Не удалось загрузить изображение.');
-        setIsUploading(false);
+        setError('Ошибка при загрузке изображения для сжатия.');
+        setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
+        setIsUploading(false); // Processing finished
       };
+
       img.src = originalDataUrl;
     };
+
+    reader.onerror = () => {
+      setError('Ошибка при чтении файла изображения.');
+      e.target.value = '';
+      setEntry(prev => ({ ...prev, coverImage: null, coverPreview: null }));
+      setIsUploading(false); // Processing finished
+    };
+
     reader.readAsDataURL(file);
   };
 
   const handleDateChange = (e) => {
-    setEntry(prev => ({ ...prev, date: e.target.value }));
+    setEntry(prev => ({
+      ...prev,
+      date: e.target.value
+    }));
   };
 
   const handlePublicToggle = () => {
@@ -289,22 +317,77 @@ const EntryEditor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('Создание/обновление записей не поддерживается с методом GET.');
+    setShowPreviewModal(true);
   };
 
   const handleFinalSubmit = async () => {
-    // Creating/updating entries with GET method is not standard and will likely fail.
-    // I will remove this block as GET is not suitable for complex data submission.
-    setError('Создание/обновление записей не поддерживается с методом GET.');
-  };
+    if (isUploading) return;
+    setIsUploading(true);
+    setError('');
+    setSuccess('');
 
-  const getShortHtml = (html, maxLen = 150) => {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    let text = doc.body.textContent || '';
-    if (text.length > maxLen) {
-      text = text.substring(0, maxLen) + '...';
+    try {
+      const token = getToken();
+      if (!token) {
+        navigate('/auth');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('title', filterBadWords(entry.title));
+      formData.append('content', filterBadWords(editorRef.current?.getContent() || ''));
+  
+      if (entry.location) {
+        formData.append('location', JSON.stringify(entry.location));
+      }
+      formData.append('date', entry.date);
+      if (entry.coverImage) {
+        formData.append('cover_image', entry.coverImage);
+      } else if (entry.coverImagePath) {
+        formData.append('cover_image', entry.coverImagePath);
+      }
+      formData.append('hashtags', entry.hashtags);
+      formData.append('is_public', entry.isPublic);
+
+      const url = isEditMode
+        ? `${API_BASE_URL}/api/entries/${id}/`
+        : `${API_BASE_URL}/api/entries/`;
+
+      const response = await fetch(url, {
+        method: isEditMode ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to save entry');
+      }
+
+      setSuccess('Запись успешно сохранена!');
+      setTimeout(() => {
+        navigate(`/account/entries?date=${entry.date}`);
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsUploading(false);
+      setShowPreviewModal(false);
     }
-    return text;
+  };
+  
+  const getShortHtml = (html, maxLen = 150) => {
+    if (!html) return '';
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    let text = div.innerText;
+    if (text.length > maxLen) text = text.slice(0, maxLen) + '...';
+    if (div.innerText.length > maxLen) {
+      return html.slice(0, maxLen) + '...';
+    }
+    return html;
   };
 
   const getHashtagColorClass = (tag) => {
@@ -316,11 +399,13 @@ const EntryEditor = () => {
 
   const formatHashtags = (hashtagsString) => {
     if (!hashtagsString) return [];
+
     return hashtagsString.split(',')
       .map(tag => tag.trim())
       .filter(tag => tag)
       .map(tag => {
         if (!tag.startsWith('#')) tag = '#' + tag;
+
         if (tag.length > MAX_HASHTAG_LENGTH) {
           return tag.substring(0, MAX_HASHTAG_LENGTH) + '...';
         }
@@ -342,9 +427,7 @@ const EntryEditor = () => {
   };
 
   const handleForceSave = () => {
-    // This will only be called if bad words are detected, and user forces save.
-    // Since saving is disabled for GET, this function will also just set an error.
-    setError('Принудительное сохранение не поддерживается с методом GET.');
+    handleFinalSubmit();
   };
 
   if (loading) {
@@ -385,7 +468,7 @@ const EntryEditor = () => {
                   type="text"
                   id="title"
                   value={entry.title}
-                  onChange={(e) => setEntry(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={e => setEntry(prev => ({ ...prev, title: filterBadWords(e.target.value) }))}
                   className="mt-1 block w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
                   required
                 />

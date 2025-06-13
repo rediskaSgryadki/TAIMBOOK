@@ -83,9 +83,10 @@ const Profile = () => {
       if (userData?.id) {
         try {
           setLoading(true);
-          const response = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userData.id}`, {
-            method: 'GET',
+          const response = await fetch(`${API_BASE_URL}/api/entries/public_by_user/`, {
+            method: 'POST',
             headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: userData.id })
           });
           
           if (!response.ok) {

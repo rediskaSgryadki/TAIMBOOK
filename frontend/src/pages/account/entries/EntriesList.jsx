@@ -60,13 +60,14 @@ const EntriesList = () => {
         }
 
         console.log('Fetching entries for date:', date);
-        const response = await fetch(`${API_BASE_URL}/api/entries/by_date/?date=${date}`, {
-          method: 'GET',
+        const response = await fetch(`${API_BASE_URL}/api/entries/by_date/`, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
+          body: JSON.stringify({ date: date }),
         });
 
         if (!response.ok) {
