@@ -101,10 +101,16 @@ CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if os.ge
     "https://taimbook.vercel.app",
     "https://taimbook123-rediskasgryadkis-projects.vercel.app",
     'http://taimbook.ru',
-    'https://taimbook.ru'
+    'https://taimbook.ru',
+    'http://localhost:3000',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "OPTIONS",
+]
 
 from corsheaders.defaults import default_headers
 
