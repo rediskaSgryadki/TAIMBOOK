@@ -100,6 +100,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else [
     "https://taimbook.vercel.app",
     "https://taimbook123-rediskasgryadkis-projects.vercel.app",
+    'http://taimbook.ru',
+    'https://taimbook.ru'
 ]
 
 CORS_ALLOW_CREDENTIALS = True
