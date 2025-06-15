@@ -102,6 +102,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://taimbook.ru",
     "https://taimbook.ru",
     "https://taimbook123-rediskasgryadkis-projects.vercel.app",
+    "http://localhost:3000"
     # другие нужные адреса
 ]
 
