@@ -16,46 +16,36 @@ class UserRegistrationView(APIView):
     
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                user = serializer.save()
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email,
-                        'has_pin': user.has_pin(),
-                    },
-                    'token': str(refresh.access_token),
-                }, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'has_pin': user.has_pin(),
+            },
+            'token': str(refresh.access_token),
+        }, status=status.HTTP_201_CREATED)
 
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
-            user = authenticate(email=email, password=password)
-            
-            if user:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email,
-                        'has_pin': user.has_pin(),
-                    },
-                    'token': str(refresh.access_token),
-                })
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'has_pin': user.has_pin(),
+            },
+            'token': str(refresh.access_token),
+        })
 
 class UserMeView(APIView):
     permission_classes = [IsAuthenticated]
