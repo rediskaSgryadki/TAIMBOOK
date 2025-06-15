@@ -102,7 +102,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://taimbook.ru",
     "https://taimbook.ru",
     "https://taimbook123-rediskasgryadkis-projects.vercel.app",
-    "http://localhost:3000"
+    "http://localhost:3000",
     # другие нужные адреса
 ]
 
@@ -111,20 +111,13 @@ CORS_ALLOW_METHODS = [
     "GET",
     "POST",
     "OPTIONS",
+    "PATCH",
 ]
 
 from corsheaders.defaults import default_headers
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    'accept',
-    'accept-encoding',
     'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
 ]
 
 # Django REST Framework настройки
