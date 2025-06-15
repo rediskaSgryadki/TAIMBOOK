@@ -47,8 +47,8 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',  # отдача статики
     'corsheaders.middleware.CorsMiddleware',       # CORS
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -100,9 +100,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else [
     "https://taimbook.vercel.app",
     "https://taimbook123-rediskasgryadkis-projects.vercel.app",
-    'http://taimbook.ru',
-    'https://taimbook.ru',
-    'http://localhost:3000',
+    "http://taimbook.ru",
+    "https://taimbook.ru",
+    "http://localhost:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
