@@ -88,12 +88,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
-        user = User.objects.create_user(**validated_data)
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
 
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)  # Changed from username to email
     password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        user = authenticate(email=email, password=password)
+        if not user:
+            raise serializers.ValidationError('Неверный email или пароль.')
+        attrs['user'] = user
+        return attrs
 
 class PinCodeSerializer(serializers.Serializer):
     old_pin = serializers.CharField(max_length=4, min_length=4, required=True)
