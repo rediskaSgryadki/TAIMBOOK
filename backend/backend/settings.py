@@ -97,12 +97,12 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS настройки
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else [
+CORS_ALLOWED_ORIGINS = [
     "https://taimbook.vercel.app",
-    "https://taimbook123-rediskasgryadkis-projects.vercel.app",
     "http://taimbook.ru",
     "https://taimbook.ru",
-    "http://localhost:3000",
+    "https://taimbook123-rediskasgryadkis-projects.vercel.app",
+    # другие нужные адреса
 ]
 
 CORS_ALLOW_CREDENTIALS = True
