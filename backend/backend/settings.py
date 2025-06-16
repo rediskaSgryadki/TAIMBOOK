@@ -112,7 +112,8 @@ CORS_ALLOW_METHODS = [
     "POST",
     "OPTIONS",
     "PATCH",
-    "DELETE"
+    "DELETE",
+    "PUT"
 ]
 
 from corsheaders.defaults import default_headers
