@@ -59,7 +59,7 @@ const Comments = () => {
         {Array.isArray(reviews) ? reviews.map((review, index) => (
           <div 
             key={index} 
-            className="bg-white dark:bg-neutral-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
+            className="card dark:bg-neutral-700 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="zag text-xl tracking-wider text-gray-800 dark:text-white">

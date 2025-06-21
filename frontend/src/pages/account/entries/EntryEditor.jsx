@@ -3,11 +3,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps';
 import AccountHeader from '../../../components/account/AccountHeader';
 import axios from 'axios';
-import { checkTokenValidity, getUserData, getToken } from '../../../utils/authUtils';
+import { checkTokenValidity, getUserData, getToken, executeRequestWithTokenRefresh } from '../../../utils/authUtils';
 import { useTheme } from '../../../context/ThemeContext';
 import { Editor } from '@tinymce/tinymce-react';
 import LastEntryCard from '../../../components/account/LastEntryCard';
 import AccountMenu from '../../../components/account/AccountMenu';
+import { Helmet } from 'react-helmet-async';
+import HashtagList from '../../../components/ui/HashtagList';
 
 // Constants for hashtag formatting
 const MAX_HASHTAG_LENGTH = 15;
@@ -40,6 +42,9 @@ const EntryEditor = () => {
   const { theme, isDarkMode } = useTheme();
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const editorRef = useRef(null);
+  const userData = getUserData();
+  const [showCustomImageModal, setShowCustomImageModal] = useState(false);
+  const customImageInputRef = useRef();
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -82,7 +87,6 @@ const EntryEditor = () => {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
           },
         });
         if (!response.ok) {
@@ -313,24 +317,19 @@ const EntryEditor = () => {
     setSuccess('');
 
     try {
-      const token = getToken();
-      if (!token) {
-        navigate('/auth');
-        return;
-      }
-
       const formData = new FormData();
       formData.append('title', entry.title);
       formData.append('content', entry.content); // Send the raw HTML content
   
       if (entry.location) {
-        formData.append('location', JSON.stringify(entry.location));
+        formData.append('location.latitude', entry.location.latitude);
+        formData.append('location.longitude', entry.location.longitude);
+        formData.append('location.name', entry.location.name);
       }
       formData.append('date', entry.date);
+      // Only append cover_image if a new file has been selected
       if (entry.coverImage) {
         formData.append('cover_image', entry.coverImage);
-      } else if (entry.coverImagePath) {
-        formData.append('cover_image', entry.coverImagePath);
       }
       formData.append('hashtags', entry.hashtags);
       formData.append('is_public', entry.isPublic);
@@ -339,18 +338,21 @@ const EntryEditor = () => {
         ? `${API_BASE_URL}/api/entries/${id}/`
         : `${API_BASE_URL}/api/entries/`;
 
-      const response = await fetch(url, {
-        method: isEditMode ? 'PUT' : 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData
-      });
+      await executeRequestWithTokenRefresh(async () => {
+        const token = getToken();
+        const response = await fetch(url, {
+          method: isEditMode ? 'PUT' : 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to save entry');
-      }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Failed to save entry');
+        }
+      }, navigate);
 
       setSuccess('Запись успешно сохранена!');
       setTimeout(() => {
@@ -385,13 +387,13 @@ const EntryEditor = () => {
 
   const formatHashtags = (hashtagsString) => {
     if (!hashtagsString) return [];
-
-    return hashtagsString.split(',')
+    // Разделяем по запятой и/или пробелу, убираем пустые
+    return hashtagsString
+      .split(/[,\s]+/)
       .map(tag => tag.trim())
       .filter(tag => tag)
       .map(tag => {
         if (!tag.startsWith('#')) tag = '#' + tag;
-
         if (tag.length > MAX_HASHTAG_LENGTH) {
           return tag.substring(0, MAX_HASHTAG_LENGTH) + '...';
         }
@@ -415,6 +417,19 @@ const EntryEditor = () => {
     handleFinalSubmit();
   };
 
+  const handleCustomImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (editorRef.current) {
+        editorRef.current.insertContent(`<img src="${event.target.result}" alt="image" />`);
+      }
+      setShowCustomImageModal(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -425,6 +440,17 @@ const EntryEditor = () => {
 
   return (
     <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка...'
+            : error
+              ? 'Ошибка'
+              : userData
+                ? `${userData.username} — редактор записи`
+                : 'Имя пользователя — редактор записи'}
+        </title>
+      </Helmet>
       <AccountHeader />
       <AccountMenu/>
       <div className='w-full space-y-10 h-screen mt-12 px-7 md:px-20'>
@@ -487,11 +513,8 @@ const EntryEditor = () => {
                     advlist: '/tinymce/plugins/advlist/plugin.min.js',
                     autolink: '/tinymce/plugins/autolink/plugin.min.js',
                     lists: '/tinymce/plugins/lists/plugin.min.js',
-                    link: '/tinymce/plugins/link/plugin.min.js',
-                    image: '/tinymce/plugins/image/plugin.min.js',
                     charmap: '/tinymce/plugins/charmap/plugin.min.js',
                     preview: '/tinymce/plugins/preview/plugin.min.js',
-                    anchor: '/tinymce/plugins/anchor/plugin.min.js',
                     searchreplace: '/tinymce/plugins/searchreplace/plugin.min.js',
                     visualblocks: '/tinymce/plugins/visualblocks/plugin.min.js',
                     fullscreen: '/tinymce/plugins/fullscreen/plugin.min.js',
@@ -501,31 +524,35 @@ const EntryEditor = () => {
                     wordcount: '/tinymce/plugins/wordcount/plugin.min.js',
                     emoticons: '/tinymce/plugins/emoticons/plugin.min.js',
                     table: '/tinymce/plugins/table/plugin.min.js',
+                    image: '/tinymce/plugins/image/plugin.min.js',
                   },
                   height: '100%',
                   menubar: false,
                   branding: false,
                   plugins: [
-                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+                    'advlist', 'autolink', 'lists', 
+                    'charmap', 'preview',
                     'searchreplace', 'visualblocks', 'fullscreen',
                     'insertdatetime', 'media', 'table', 'help', 'wordcount',
-                    'emoticons'
+                    'emoticons',
+                    'image',
                   ],
                   toolbar:
                     'undo redo | formatselect | bold italic backcolor | ' +
-                    'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | emoticons | link image media table mapButton | fullscreen | help',
+                    'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | emoticons | customImageUpload media table | fullscreen | help',
+                  image_uploadtab: true,
+                  image_urltab: false,
                   content_style: isDarkMode
                     ? 'body { background-color: #262626; color: #fff; overflow-y: auto !important; }'
                     : 'body { background-color: #fff; color: #222; overflow-y: auto !important; }',
                   help_tabs: ['shortcuts', 'keyboardnav'],
-                  statusbar: false,
                   setup: function(editor) {
-                    editor.ui.registry.addIcon('customMapIcon', '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-map" viewBox="0 0 16 16">\n  <path \n    fill-rule="evenodd" \n    d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.5.5 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103M10 1.91l-4-.8v12.98l4 .8zm1 12.98 4-.8V1.11l-4 .8zm-6-.8V1.11l-4 .8v12.98z"\n    stroke="currentColor"\n    stroke-width="0.8"\n    stroke-linejoin="round"\n  />\n</svg>');
-
-                    editor.ui.registry.addButton('mapButton', {
-                      icon: 'customMapIcon',
+                    editor.ui.registry.addIcon('customImageIcon', '<svg width="20" height="20" fill="none" stroke="#222" stroke-width="4" viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="8" stroke="#222" stroke-width="4" fill="none"/><path d="M14 20h2a2 2 0 0 0 2-2 2 2 0 0 1 2-2h8a2 2 0 0 1 2 2 2 2 0 0 0 2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V22a2 2 0 0 1 2-2z" stroke="#222" stroke-width="4" fill="none"/><circle cx="24" cy="27" r="4" stroke="#222" stroke-width="4" fill="none"/></svg>');
+                    editor.ui.registry.addButton('customImageUpload', {
+                      icon: 'customImageIcon',
+                      tooltip: 'Добавить фото (кастом)',
                       onAction: function() {
-                        setShowMap(true); // Now opens the map modal
+                        setShowCustomImageModal(true);
                       }
                     });
                   },
@@ -571,13 +598,38 @@ const EntryEditor = () => {
             }} onMore={handleClosePreview} />
 
             <div className="space-y-4 mb-6 mt-6">
+              {/* Кнопка для добавления местоположения */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowMap(true)}
+                  className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors mb-2"
+                >
+                  <svg className="inline w-5 h-5 mr-2 align-text-bottom" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.5.5 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103M10 1.91l-4-.8v12.98l4 .8zm1 12.98 4-.8V1.11l-4 .8zm-6-.8V1.11l-4 .8v12.98z" stroke="currentColor" stroke-width="0.8" stroke-linejoin="round"/></svg>
+                  Добавить местоположение
+                </button>
+                {entry.location && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Выбрано: {entry.location.name} ({entry.location.latitude}, {entry.location.longitude})</p>
+                )}
+              </div>
               {/* Cover Image in Preview Modal */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                   Обложка
                 </label>
                 <div className="flex items-center space-x-4">
-                  <div className="w-32 h-32 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="cover-upload"
+                    style={{ display: 'none' }}
+                    onChange={handleCoverImageChange}
+                  />
+                  <label
+                    htmlFor="cover-upload"
+                    className="w-32 h-32 border border-neutral-300 dark:border-neutral-600 rounded-lg overflow-hidden flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 cursor-pointer hover:shadow-lg transition"
+                    style={{ cursor: 'pointer' }}
+                  >
                     {entry.coverPreview ? (
                       <img
                         src={entry.coverPreview}
@@ -589,24 +641,7 @@ const EntryEditor = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block">
-                      <span className="sr-only">Выберите изображение</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCoverImageChange}
-                        className="block w-full text-sm text-neutral-500 dark:text-neutral-400
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-full file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-indigo-50 file:text-indigo-700
-                          dark:file:bg-indigo-900 dark:file:text-indigo-300
-                          hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800"
-                      />
-                    </label>
-                  </div>
+                  </label>
                 </div>
               </div>
 
@@ -622,12 +657,14 @@ const EntryEditor = () => {
                     const value = e.target.value;
                     setEntry(prev => ({ ...prev, hashtags: value }));
                   }}
-                  placeholder="Введите хэштеги через запятую, например: мысли, вдохновение"
+                  placeholder="Введите хэштеги через запятую или пробел, например: мысли, вдохновение или привет пока"
                   className="w-full p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-700 dark:text-white"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Максимальная длина хэштега: {MAX_HASHTAG_LENGTH} символов. Чем длиннее хэштег, тем более серым он будет отображаться.
                 </p>
+                {/* Отображение разобранных хештегов */}
+                <HashtagList hashtags={formatHashtags(entry.hashtags)} className="mt-2" />
               </div>
 
               {/* Public Toggle in Preview Modal */}
@@ -725,6 +762,38 @@ const EntryEditor = () => {
                     </button>
                 </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCustomImageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:text-white">
+          <div className="bg-white dark:bg-neutral-800 rounded-3xl p-6 w-full max-w-xs flex flex-col items-center">
+            <h2 className="zag text-lg mb-4">Добавить фото</h2>
+            <input
+              type="file"
+              accept="image/*"
+              ref={customImageInputRef}
+              style={{ display: 'none' }}
+              onChange={handleCustomImageUpload}
+            />
+            <button
+              type="button"
+              className="w-40 h-40 border-2 border-dashed border-lime-500 rounded-lg flex flex-col items-center justify-center text-lime-600 bg-lime-50 hover:bg-lime-100 transition mb-4"
+              onClick={() => customImageInputRef.current && customImageInputRef.current.click()}
+            >
+              <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-base font-medium">Выбрать файл</span>
+            </button>
+            <button
+              type="button"
+              className="mt-2 px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+              onClick={() => setShowCustomImageModal(false)}
+            >
+              Отмена
+            </button>
           </div>
         </div>
       )}

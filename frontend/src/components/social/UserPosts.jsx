@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { getToken, checkTokenValidity, redirectToAuth } from '../../utils/authUtils';
 import { Link } from 'react-router-dom';
+import { formatHashtags } from '../../utils/formatHashtags';
+import HashtagList from '../ui/HashtagList';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -15,6 +17,7 @@ const UserPosts = ({ post }) => {
   const [commentText, setCommentText] = useState('')
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [coverImageLoadError, setCoverImageLoadError] = useState(false)
 
   useEffect(() => {
     if (post?.id) {
@@ -24,6 +27,11 @@ const UserPosts = ({ post }) => {
     }
     // eslint-disable-next-line
   }, [post?.id])
+
+  useEffect(() => {
+    // Сбрасываем ошибку загрузки обложки при смене поста
+    setCoverImageLoadError(false);
+  }, [post?.cover_image]);
 
   const fetchLikeCount = async (postId) => {
     try {
@@ -79,7 +87,7 @@ const UserPosts = ({ post }) => {
       return;
     }
     if (commentText.length > 500) {
-      alert('Комментарий слишком длинный (максимум 500 символов)!');
+      alert('Комментарий слишком длинный (максимум 500 символов)! уу');
       return;
     }
     try {
@@ -91,13 +99,6 @@ const UserPosts = ({ post }) => {
     } catch (e) {
       alert('Ошибка при попытке добавить комментарий!');
     }
-  }
-
-  const formatHashtags = (hashtagsString) => {
-    if (!hashtagsString) return []
-    return hashtagsString.split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag)
   }
 
   const getHashtagColorClass = (tag) => 'text-gray-600 dark:text-gray-300'
@@ -135,7 +136,7 @@ const UserPosts = ({ post }) => {
             </div>
           )}
           <h2 className='zag tracking-widest'>{authorName}</h2>
-          {/* <Link to={`/social/user/${post.author.username}`}>
+          {/* <Link to={`/social/user/${post.author.username}>
             <h2 className='zag tracking-widest'>{authorName}</h2>
           </Link> */}
         </div>
@@ -145,9 +146,14 @@ const UserPosts = ({ post }) => {
             {post.date ? new Date(post.date).toLocaleDateString() : 'Без даты'}
           </p>
         </div>
-        {post.cover_image && (
+        {post.cover_image && !coverImageLoadError && (
           <div className="cursor-pointer" onClick={() => handleCoverClick(post.cover_image)}>
-            <img src={post.cover_image} alt={post.title || 'Cover image'} className='w-full h-64 sm:h-80 object-cover rounded-3xl' />
+            <img
+              src={post.cover_image}
+              alt={post.title || 'Cover image'}
+              className='w-full h-64 sm:h-80 object-cover rounded-3xl'
+              onError={() => setCoverImageLoadError(true)}
+            />
           </div>
         )}
         <div className="overflow-x-auto">
@@ -168,7 +174,7 @@ const UserPosts = ({ post }) => {
               </div>
               <div className='flex items-center'>
                 <button className='text-2xl' onClick={handleShowComments} title='Комментарии'>💬</button>
-                <p className='ml-1'> {comments.length ?? 0}</p>
+                <p className='ml-1'> {post.comments_count ?? 0} </p>
               </div>
             </div>
             {!expanded && (
@@ -231,26 +237,14 @@ const UserPosts = ({ post }) => {
           )}
         </div>
         <div className='flex justify-between items-center'>
-          <div className='flex items-center overflow-hidden flex-1 mr-3'>
-            {formatHashtags(post.hashtags).length > 0 && (
-              <div className='flex items-center flex-nowrap overflow-hidden'>
-                {formatHashtags(post.hashtags).map((tag, index) => (
-                  <span
-                    key={index}
-                    className={`text-xs whitespace-nowrap mr-2 ${getHashtagColorClass(tag)}`}
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
           {post.location && (
             <p className='text-sm text-gray-500 dark:text-gray-400'>
               📍 {post.location.name || `${post.location.latitude?.toFixed(2)}, ${post.location.longitude?.toFixed(2)}`}
             </p>
           )}
         </div>
+        {/* Хэштеги */}
+        <HashtagList hashtags={formatHashtags(post.hashtags)} className="mt-2" />
       </div>
       {showFullCover && fullCoverUrl && (
         <div

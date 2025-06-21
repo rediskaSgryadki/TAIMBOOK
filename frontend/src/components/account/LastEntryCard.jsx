@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { formatHashtags } from '../../utils/formatHashtags';
+import HashtagList from '../ui/HashtagList';
 
 const MAX_CONTENT_LENGTH = 150;
 const MAX_HASHTAG_LENGTH = 15;
 
 const LastEntryCard = ({ entry, onMore }) => {
   const [runTour, setRunTour] = useState(true);
+  const [coverImageLoadError, setCoverImageLoadError] = useState(false);
+
+  useEffect(() => {
+    // Сбрасываем ошибку загрузки обложки при смене записи
+    setCoverImageLoadError(false);
+  }, [entry?.cover_image]);
 
   if (!entry) return null;
   
@@ -45,34 +53,16 @@ const LastEntryCard = ({ entry, onMore }) => {
     return 'text-gray-400 dark:text-gray-500';
   };
 
-  // Преобразование строки хэштегов в массив и форматирование
-  const formatHashtags = (hashtagsString) => {
-    if (!hashtagsString) return [];
-    
-    return hashtagsString.split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag)
-      .map(tag => {
-        // Добавляем # если его нет
-        if (!tag.startsWith('#')) tag = '#' + tag;
-        
-        // Обрезаем до MAX_HASHTAG_LENGTH
-        if (tag.length > MAX_HASHTAG_LENGTH) {
-          return tag.substring(0, MAX_HASHTAG_LENGTH) + '...';
-        }
-        return tag;
-      });
-  };
-
   const hashtagsList = formatHashtags(hashtags);
 
   return (
     <div className="card shadow-md rounded-2xl sm:rounded-3xl flex flex-col p-4 sm:p-6 md:p-8 lg:p-10 relative overflow-hidden">
-      {cover_image && (
+      {cover_image && !coverImageLoadError && (
         <img
           src={cover_image}
           alt={title}
           className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-t-xl entry-cover"
+          onError={() => setCoverImageLoadError(true)}
         />
       )}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-y-2 sm:gap-y-0">
@@ -133,6 +123,8 @@ const LastEntryCard = ({ entry, onMore }) => {
           </button>
         </div>
       </div>
+      {/* Хэштеги */}
+      <HashtagList hashtags={hashtagsList} className="mt-2" />
     </div>
   );
 };

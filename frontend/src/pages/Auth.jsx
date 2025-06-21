@@ -5,6 +5,8 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { getToken, setAuthData, clearAuthData } from '../utils/authUtils';
 import PinForm from '../components/account/pin/PinForm';
 import Header from '../components/Header';
+import { useUser } from '../context/UserContext';
+import { Helmet } from 'react-helmet-async';
 
 // Компонент для ввода пароля с возможностью показать/скрыть
 const PasswordInput = ({
@@ -48,40 +50,40 @@ const PasswordInput = ({
 );
 
 // Кнопка Яндекс OAuth через официальный виджет
-const YandexAuthButton = ({ onAuthSuccess }) => {
-  const buttonContainerRef = useRef(null);
+// const YandexAuthButton = ({ onAuthSuccess }) => {
+//   const buttonContainerRef = useRef(null);
 
-  useEffect(() => {
-    if (window.YaAuthSuggest && buttonContainerRef.current) {
-      window.YaAuthSuggest.init(
-        {
-          client_id: "4a79ad9de3c74adfadd5d775c2f9bbd6",
-          response_type: "token",
-          redirect_uri: "https://taimbook.ru/auth"
-        },
-        "https://taimbook.ru",
-        {
-          view: "button",
-          parentId: buttonContainerRef.current.id,
-          buttonSize: 'xxl',
-          buttonView: 'icon',
-          buttonTheme: 'light',
-          buttonBorderRadius: "22",
-          buttonIcon: 'ya',
-        }
-      )
-      .then(({ handler }) => handler())
-      .then(data => {
-        if (data && data.access_token && onAuthSuccess) {
-          onAuthSuccess(data.access_token);
-        }
-      })
-      .catch(error => console.log('Обработка ошибки', error));
-    }
-  }, [onAuthSuccess]);
+//   useEffect(() => {
+//     if (window.YaAuthSuggest && buttonContainerRef.current) {
+//       window.YaAuthSuggest.init(
+//         {
+//           client_id: "4a79ad9de3c74adfadd5d775c2f9bbd6",
+//           response_type: "token",
+//           redirect_uri: "https://taimbook.ru/auth"
+//         },
+//         "https://taimbook.ru",
+//         {
+//           view: "button",
+//           parentId: buttonContainerRef.current.id,
+//           buttonSize: 'xxl',
+//           buttonView: 'icon',
+//           buttonTheme: 'light',
+//           buttonBorderRadius: "22",
+//           buttonIcon: 'ya',
+//         }
+//       )
+//       .then(({ handler }) => handler())
+//       .then(data => {
+//         if (data && data.access_token && onAuthSuccess) {
+//           onAuthSuccess(data.access_token);
+//         }
+//       })
+//       .catch(error => console.log('Обработка ошибки', error));
+//     }
+//   }, [onAuthSuccess]);
 
-  return <div id="yandex-auth-button" ref={buttonContainerRef}></div>;
-};
+//   return <div id="yandex-auth-button" ref={buttonContainerRef}></div>;
+// };
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -95,6 +97,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPinForm, setShowPinForm] = useState(false);
   const navigate = useNavigate();
+  const { updateUser } = useUser();
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -271,15 +274,20 @@ const Auth = () => {
   };
 
   const handlePinSuccess = () => {
+    setShowPinForm(false);
+    updateUser();
     navigate('/account/home');
   };
 
   if (showPinForm) {
-    return <PinForm onSuccess={handlePinSuccess} />;
+    return <PinForm onSuccess={handlePinSuccess} updateUser={updateUser} isSettingPin={false} />;
   }
 
   return (
     <>
+      <Helmet>
+        <title>{isLogin ? 'ТАЙМБУК - вход' : 'ТАЙМБУК - регистрация'}</title>
+      </Helmet>
       <Header />
       <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white dark:bg-neutral-800 p-8 rounded-xl shadow-lg">
@@ -296,9 +304,6 @@ const Auth = () => {
                 {isLogin ? 'зарегистрируйтесь' : 'войдите'}
               </button>
             </p>
-          </div>
-          <div className="mb-4 flex justify-center">
-            <YandexAuthButton onAuthSuccess={handleYandexAuth} />
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (

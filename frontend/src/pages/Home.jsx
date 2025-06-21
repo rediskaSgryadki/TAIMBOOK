@@ -7,10 +7,14 @@ import MobilePhotoMarquee from "../components/animation/slider";
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Comments from '../components/Comments';
+import { Helmet } from 'react-helmet-async';
 const Home = () => {
   const navigate = useNavigate();
   return (
     <>
+    <Helmet>
+        <title>ТАЙМБУК</title>
+    </Helmet>
       <div className="App min-h-screen overflow-x-hidden">
         <Header />
         <div className='space-y-56'>
@@ -140,14 +144,14 @@ const Home = () => {
 
             <section className="relative overflow-visible card py-20 md:py-52 px-7 lg:px-20">
                 <div className="flex flex-col gap-y-10 items-center md:relative">
-                    <img src="/img/Home/accounts _ contract, document, profile, signature, policy, man, paper, page.webp" alt="" className='w-40' />
+                    <img src="/img/Home/accounts _ contract, document, profile, signature, policy, man, paper, page.webp" alt="" className='block md:hidden w-40' />
                     <img src="/img/Home/accounts _ contract, document, profile, signature, policy, man, paper, page.webp" alt="" className="hidden md:block absolute w-[20vh] bottom-[40vh] left-0 lg:w-[30vh] lg:top-[10vh] lg:left-[10vh] z-10"/>
                     <img src="/img/Home/business _ deal, contract, handshake, man, woman, agreement.webp" alt="" className="hidden md:block absolute w-[20vh] lg:w-[30vh] top-[40vh] right-0 lg:-top-[20vh] lg:right-[10vh] z-10"/>
                     <div className="lg:w-1/2 text-center text text-xl lg:text-2xl flex flex-col gap-y-5 items-center z-20 relative">
                         <p className='font-semibold'>Присоединяйтесь к ТАЙМБУК уже сегодня! Делитесь своими мыслями, обменивайтесь записями, вдохновляйтесь историями других и станьте частью дружного сообщества единомышленников!</p>
                         <button className='py-5 px-10 bg-[var(--color-green)] rounded-full text text-2xl pulse-button' onClick={() => navigate('/auth')}>Присоединиться</button>
                     </div>
-                    <img src="/img/Home/business _ deal, contract, handshake, man, woman, agreement.webp" alt="" className='w-40' />
+                    <img src="/img/Home/business _ deal, contract, handshake, man, woman, agreement.webp" alt="" className='block md:hidden w-40' />
                 </div>
             </section>  
         </div>

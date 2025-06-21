@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { getToken, getUserData } from '../../utils/authUtils';
 import AccountThemeToggle from './AccountThemeToggle';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -9,6 +10,7 @@ const AccountHeader = () => {
   const [user, setUser] = useState(null);
   const [runTour, setRunTour] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,7 +63,7 @@ const AccountHeader = () => {
 
             <p className="text">{user ? user.username : 'Имя пользователя'}</p>
           </div>
-        <button className="zag text-xl hidden lg:block lg:text-3xl" onClick={startTour}>ТАЙМБУК</button>
+        <button className="zag text-xl hidden lg:block lg:text-3xl" onClick={() => navigate('/account/home')}>ТАЙМБУК</button>
         <div className="flex items-center gap-x-4">
           <AccountThemeToggle className="theme-toggle" />
         </div>

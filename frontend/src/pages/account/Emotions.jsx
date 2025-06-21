@@ -8,7 +8,7 @@ import { getToken, executeRequestWithTokenRefresh } from '../../utils/authUtils'
 import { useUser } from '../../context/UserContext';
 import AccountMenu from '../../components/account/AccountMenu';
 import { useMovingBg } from '../../utils/movingBg';
-
+import { Helmet } from 'react-helmet-async';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -190,6 +190,18 @@ const Emotions = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка...'
+            : error
+              ? 'Ошибка'
+              : user
+                ? `${user.username} - трекер эмоций`
+                : 'Имя пользователя - трекер эмоций'}
+        </title>
+      </Helmet>
     <div className="h-screen flex flex-col">
       <AccountHeader />
       <div className="flex flex-grow w-full">
@@ -291,10 +303,10 @@ const Emotions = () => {
               </div>
             </div>
           )}
-
         </section>
       </div>
     </div>
+    </>
   );
 };
 

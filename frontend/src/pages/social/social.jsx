@@ -8,6 +8,7 @@ import AccountMenu from '../../components/account/AccountMenu'
 // import UserProfile from './UserProfile';
 // <Route path="/social/user/:userId" element={<UserProfile />} />
 import axios from 'axios'; // Импортируем axios
+import { Helmet } from 'react-helmet-async';
 
 const Social = () => {
   const [publicPosts, setPublicPosts] = useState([])
@@ -66,6 +67,9 @@ const Social = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Сообщество</title>
+      </Helmet>
       <AccountHeader />
 
       <div className="flex flex-grow h-screen">
@@ -74,7 +78,7 @@ const Social = () => {
           <div className="px-20 w-screen flex justify-center md:justify-end">
             <input
               type="text"
-              className="card px-10 py-4 md:py-2 rounded-b-full focus:outline-none"
+              className="card md:w-1/5 px-10 py-4 rounded-b-full focus:outline-none border-b border-b-gray-300"
               placeholder="👀 Поиск"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}

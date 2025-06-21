@@ -4,6 +4,8 @@ import AccountHeader from '../../components/account/AccountHeader'
 import AccountMenu from '../../components/account/AccountMenu'
 import { useMovingBg } from '../../utils/movingBg'
 import UserPosts from '../../components/social/UserPosts'
+import { Helmet } from 'react-helmet-async'
+import LastEntryCard from '../../components/account/LastEntryCard'
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -87,12 +89,27 @@ const UserProfile = () => {
     }
   };
 
+  // Разделяем записи на публичные и непубличные
+  const publicPosts = publicEntries.filter(entry => entry.is_public);
+  const privatePosts = publicEntries.filter(entry => !entry.is_public);
+
   if (error) {
     return <div className="text-center text-red-500 py-10">{error}</div>;
   }
 
   return (
     <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка профиля...'
+            : error
+              ? 'Ошибка загрузки'
+              : user
+                ? `${user.username} - профиль`
+                : 'Профиль пользователя'}
+        </title>
+      </Helmet>
       <AccountHeader/>
       <AccountMenu/>
       <section className='px-7 lg:px-20 space-y-10 py-10'>
@@ -162,12 +179,17 @@ const UserProfile = () => {
               <p className="text-center text-gray-500">Загрузка публичных записей...</p>
             ) : error ? (
               <p className="text-center text-red-500">Ошибка: {error}</p>
-            ) : getFilteredEntries().length === 0 ? (
+            ) : publicPosts.length + privatePosts.length === 0 ? (
               <p className="text-center text-gray-500">Нет записей</p>
             ) : (
               <div className="flex w-full md:w-3/4 2xl:w-1/2 mx-auto flex-col gap-10">
-                {getFilteredEntries().map((entry) => (
+                {/* Публичные записи */}
+                {publicPosts.map((entry) => (
                   <UserPosts key={entry.id} post={entry} />
+                ))}
+                {/* Непубличные записи */}
+                {privatePosts.map((entry) => (
+                  <LastEntryCard key={entry.id} entry={entry} />
                 ))}
               </div>
             )}

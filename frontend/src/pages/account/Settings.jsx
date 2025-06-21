@@ -5,7 +5,7 @@ import { getToken, setAuthData, clearAuthData, executeRequestWithTokenRefresh, A
 import { useTheme } from '../../context/ThemeContext'
 import AccountMenu from '../../components/account/AccountMenu'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
-
+import { Helmet } from 'react-helmet-async'
 // Универсальный инпут с глазом
 function PasswordInput({ id, label, value, onChange, show, setShow, placeholder, autoComplete = 'off' }) {
   return (
@@ -262,13 +262,12 @@ const ProfileSettings = () => {
     try {
       const token = getToken();
       const response = await executeRequestWithTokenRefresh(() =>
-        axios.post(`${API_BASE_URL}/api/users/check_pin/`, { pin_code: pinOld }, {
+        axios.post(`${API_BASE_URL}/api/users/verify-pin/`, { pin_code: pinOld }, {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
-      if (response.data.success) {
+      if (response.data.status === 'success') {
         setPinStep(2);
-        setPinOld(''); // Clear old PIN after successful verification
       } else {
         setErrorMessage(response.data.detail || 'Неверный старый пин-код.');
       }
@@ -298,15 +297,21 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
+      const payload = {
+        old_pin: pinOld,
+        pin_code: pinCodeNew,
+        confirm_pin: pinCodeNewConfirm
+      };
       await executeRequestWithTokenRefresh(() =>
-        axios.post(`${API_BASE_URL}/api/users/set_pin/`, { new_pin: pinCodeNew }, {
+        axios.post(`${API_BASE_URL}/api/users/set-pin/`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
       setSuccessMessage('Пин-код успешно изменён.');
+      setPinOld('');
       setPinCodeNew('');
       setPinCodeNewConfirm('');
-      setPinStep(1); // Reset to step 1 after successful PIN change
+      setPinStep(1);
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       setErrorMessage(
@@ -329,12 +334,28 @@ const ProfileSettings = () => {
     setLoading(true);
     try {
       const token = getToken();
+      const payload = {
+        old_pin: pinOld,
+        pin_code: '',
+        confirm_pin: ''
+      };
       const response = await executeRequestWithTokenRefresh(() =>
-        axios.post(`${API_BASE_URL}/api/users/clear_pin/`, { old_pin: pinOld }, {
+        axios.post(`${API_BASE_URL}/api/users/set-pin/`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
-      if (response.data.success) {
+      if (response.data.message) {
+        // Обновляем локальные данные пользователя, чтобы отразить удаление PIN-кода
+        const currentUserData = JSON.parse(sessionStorage.getItem('userData'));
+        if (currentUserData) {
+          currentUserData.has_pin = false;
+          sessionStorage.setItem('userData', JSON.stringify(currentUserData));
+          // Обновляем состояние пользователя в контексте
+          if (userData && currentUserData.id === userData.id) {
+            setUserData(currentUserData);
+          }
+        }
+
         setSuccessMessage('Пин-код успешно удален.');
         setPinOld('');
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -401,6 +422,17 @@ const ProfileSettings = () => {
 
   return (
     <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка...'
+            : errorMessage
+              ? 'Ошибка'
+              : userData
+                ? `${userData.username} - настройки`
+                : 'Имя пользователя - настройки'}
+        </title>
+      </Helmet>
       <AccountHeader />
       <section className="container mx-auto px-4 py-8">
         <AccountMenu/>
@@ -420,152 +452,134 @@ const ProfileSettings = () => {
           )}
           
           <div className="space-y-4">
-            {/* Personal Information Section (with sub-sections) */}
+            {/* Имя пользователя */}
             <div className="card rounded-lg shadow-md overflow-hidden">
               <div 
-                onClick={() => toggleSection('personal')} 
+                onClick={() => toggleSection('username')} 
                 className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
               >
-                <h2 className="text-xl font-semibold">Личная информация</h2>
-                <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'personal' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <h2 className="text-xl font-semibold">Имя пользователя</h2>
+                <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'username' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              
-              {activeSection === 'personal' && (
-                <div className="border-t">
-                  {/* Username Sub-section */}
-                  <div className="border-b">
-                    <div 
-                      onClick={() => toggleSubSection('username')} 
-                      className="p-3 pl-8 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
-                    >
-                      <h3 className="text-lg font-medium">Имя пользователя</h3>
-                      <svg className={`w-4 h-4 transition-transform duration-300 ${activeSubSection === 'username' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+              {activeSection === 'username' && (
+                <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
+                  <div className="space-y-4">
+                    <div>
+                      <TextInput
+                        id="name"
+                        label="Имя пользователя"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Ваше имя"
+                      />
                     </div>
-                    
-                    {activeSubSection === 'username' && (
-                      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
-                        <div className="space-y-4">
-                          <div>
-                            <TextInput
-                              id="name"
-                              label="Имя пользователя"
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                              placeholder="Ваше имя"
-                            />
-                          </div>
-                          <button 
-                            onClick={handleUpdateUsername}
-                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
-                          >
-                            Сохранить имя
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    <button 
+                      onClick={handleUpdateUsername}
+                      className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                    >
+                      Сохранить имя
+                    </button>
                   </div>
-                  
-                  {/* Profile Photo Sub-section */}
-                  <div>
-                    <div 
-                      onClick={() => toggleSubSection('photo')} 
-                      className="p-3 pl-8 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
-                    >
-                      <h3 className="text-lg font-medium">Фото профиля</h3>
-                      <svg className={`w-4 h-4 transition-transform duration-300 ${activeSubSection === 'photo' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Фото профиля */}
+            <div className="card rounded-lg shadow-md overflow-hidden">
+              <div 
+                onClick={() => toggleSection('photo')} 
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
+              >
+                <h2 className="text-xl font-semibold">Фото профиля</h2>
+                <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'photo' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {activeSection === 'photo' && (
+                <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                      {photoPreview ? (
+                        <img src={photoPreview}  className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-4xl">👤</span>
+                      )}
                     </div>
-                    
-                    {activeSubSection === 'photo' && (
-                      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
-                        <div className="flex flex-col md:flex-row items-center gap-6">
-                          <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                            {photoPreview ? (
-                              <img src={photoPreview}  className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-4xl">👤</span>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handlePhotoChange}
-                              className="block w-full text-sm border border-gray-300 rounded-md cursor-pointer focus:outline-none"
-                            />
-                            <p className="mt-1 text-sm opacity-70">PNG, JPG размером до 2MB</p>
-                            <button 
-                              onClick={handleUpdatePhoto}
-                              className="mt-4 py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
-                            >
-                              Сохранить фото
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="block w-full text-sm border border-gray-300 rounded-md cursor-pointer focus:outline-none"
+                      />
+                      <p className="mt-1 text-sm opacity-70">PNG, JPG размером до 2MB</p>
+                      <button 
+                        onClick={handleUpdatePhoto}
+                        className="mt-4 py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                      >
+                        Сохранить фото
+                      </button>
+                    </div>
                   </div>
-                  {/* Password Sub-section */}
-                  <div>
-                    <div 
-                      onClick={() => toggleSubSection('password')} 
-                      className="p-3 pl-8 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
-                    >
-                      <h3 className="text-lg font-medium">Смена пароля</h3>
-                      <svg className={`w-4 h-4 transition-transform duration-300 ${activeSubSection === 'password' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Смена пароля */}
+            <div className="card rounded-lg shadow-md overflow-hidden">
+              <div 
+                onClick={() => toggleSection('password')} 
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-opacity-80 transition-colors"
+              >
+                <h2 className="text-xl font-semibold">Смена пароля</h2>
+                <svg className={`w-5 h-5 transition-transform duration-300 ${activeSection === 'password' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              {activeSection === 'password' && (
+                <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
+                  <div className="space-y-4">
+                    <div>
+                      <PasswordInput
+                        id="oldPassword"
+                        label="Старый пароль"
+                        value={oldPassword}
+                        onChange={e => setOldPassword(e.target.value)}
+                        show={showOldPassword}
+                        setShow={setShowOldPassword}
+                        placeholder="Введите старый пароль"
+                      />
                     </div>
-                    {activeSubSection === 'password' && (
-                      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t">
-                        <div className="space-y-4">
-                          <div>
-                            <PasswordInput
-                              id="oldPassword"
-                              label="Старый пароль"
-                              value={oldPassword}
-                              onChange={e => setOldPassword(e.target.value)}
-                              show={showOldPassword}
-                              setShow={setShowOldPassword}
-                              placeholder="Введите старый пароль"
-                            />
-                          </div>
-                          <div>
-                            <PasswordInput
-                              id="newPassword"
-                              label="Новый пароль"
-                              value={newPassword}
-                              onChange={e => setNewPassword(e.target.value)}
-                              show={showNewPassword}
-                              setShow={setShowNewPassword}
-                              placeholder="Введите новый пароль"
-                            />
-                          </div>
-                          <div>
-                            <PasswordInput
-                              id="confirmPassword"
-                              label="Повторите новый пароль"
-                              value={confirmPassword}
-                              onChange={e => setConfirmPassword(e.target.value)}
-                              show={showConfirmPassword}
-                              setShow={setShowConfirmPassword}
-                              placeholder="Повторите новый пароль"
-                            />
-                          </div>
-                          <button
-                            onClick={handleChangePassword}
-                            className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
-                          >
-                            Сменить пароль
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <PasswordInput
+                        id="newPassword"
+                        label="Новый пароль"
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        show={showNewPassword}
+                        setShow={setShowNewPassword}
+                        placeholder="Введите новый пароль"
+                      />
+                    </div>
+                    <div>
+                      <PasswordInput
+                        id="confirmPassword"
+                        label="Повторите новый пароль"
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        show={showConfirmPassword}
+                        setShow={setShowConfirmPassword}
+                        placeholder="Повторите новый пароль"
+                      />
+                    </div>
+                    <button
+                      onClick={handleChangePassword}
+                      className="py-2 px-4 bg-lime-600 text-white rounded hover:bg-lime-700 transition-colors"
+                    >
+                      Сменить пароль
+                    </button>
                   </div>
                 </div>
               )}

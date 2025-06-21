@@ -5,9 +5,10 @@ import AccountHeader from '../../../components/account/AccountHeader'
 import AccountMenu from '../../../components/account/AccountMenu'
 import { useMovingBg } from '../../../utils/movingBg'
 import UserPosts from '../../../components/social/UserPosts'
+import LastEntryCard from '../../../components/account/LastEntryCard'
 import axios from 'axios'
 import { getToken } from '../../../utils/authUtils'
-
+import { Helmet } from 'react-helmet-async'
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const Profile = () => {
@@ -61,20 +62,32 @@ const Profile = () => {
           setImageError(false);
         }
 
-        // 2. Fetch public entries AFTER user data is successfully fetched
+        // 2. Fetch entries
+        let entriesData = [];
         if (userIdToFetch) {
-          const entriesResponse = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userIdToFetch}`, {
-            method: 'GET',
-            headers: {'Content-Type': 'application/json'},
-          });
-          
-          if (!entriesResponse.ok) {
-            throw new Error('Failed to fetch public entries');
+          if (loggedInUserData && loggedInUserData.id === userIdToFetch) {
+            // Владелец профиля — получаем все записи
+            const entriesResponse = await fetch(`${API_BASE_URL}/api/entries/`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+            });
+            if (!entriesResponse.ok) throw new Error('Ошибка загрузки записей');
+            entriesData = await entriesResponse.json();
+          } else {
+            // Чужой профиль — только публичные
+            const entriesResponse = await fetch(`${API_BASE_URL}/api/entries/public_by_user/?user_id=${userIdToFetch}`, {
+              method: 'GET',
+              headers: {'Content-Type': 'application/json'},
+            });
+            if (!entriesResponse.ok) throw new Error('Ошибка загрузки записей');
+            entriesData = await entriesResponse.json();
           }
-          const entriesData = await entriesResponse.json();
-          if (isMounted) {
-            setPublicEntries(entriesData);
-          }
+        }
+        if (isMounted) {
+          setPublicEntries(entriesData);
         }
 
       } catch (err) {
@@ -100,7 +113,7 @@ const Profile = () => {
     return () => { // Функция очистки для сброса флага монтирования
       isMounted = false;
     };
-  }, [profileUsername, navigate]); // Зависимости для useEffect (удалил loggedInUserData)
+  }, [profileUsername, navigate, loggedInUserData]); // Добавил loggedInUserData в зависимости
 
   const { ref: welcomeRef, mousePosition, handleMouseMove, handleMouseLeave } = useMovingBg();
 
@@ -153,6 +166,17 @@ const Profile = () => {
 
   return (
     <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка профиля...'
+            : error
+              ? 'Ошибка загрузки'
+              : profileUser
+                ? `${profileUser.username} - профиль`
+                : 'Профиль пользователя'}
+        </title>
+      </Helmet>
     <AccountHeader/>
     <AccountMenu/>
     <section className='px-7 lg:px-20 space-y-10 py-10'>
@@ -224,12 +248,14 @@ const Profile = () => {
           ) : error ? (
             <p className="text-center text-red-500">Ошибка: {error}</p>
           ) : getFilteredEntries().length === 0 ? (
-            <p className="text-center text-gray-500">У пользователя нет публичных записей</p>
+            <p className="text-center text-gray-500">У пользователя нет записей</p>
           ) : (
             <div className="flex w-full md:w-3/4 2xl:w-1/2 mx-auto flex-col gap-10">
-              {getFilteredEntries().map((entry) => (
-                <UserPosts key={entry.id} post={entry} />
-              ))}
+              {getFilteredEntries().map(entry =>
+                entry.is_public === true
+                  ? <UserPosts key={entry.id} post={entry} />
+                  : <LastEntryCard key={entry.id} entry={entry} onMore={() => navigate(`/account/entries/${entry.id}`)} />
+              )}
             </div>
           )}
         </div>

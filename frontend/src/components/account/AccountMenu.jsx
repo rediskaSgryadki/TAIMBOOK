@@ -9,8 +9,6 @@ const menuWidth = 280 // Ширина меню в пикселях
 const AccountMenu = () => {
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
-  const [communityOpen, setCommunityOpen] = useState(false)
-  const communityRef = useRef(null)
   const [showCalendarModal, setShowCalendarModal] = useState(false)
 
   return (
@@ -42,22 +40,10 @@ const AccountMenu = () => {
         <div>
           <p className='flex gap-x-2 w-full py-2 px-10 text-neutral-900 dark:text-neutral-100 hover:bg-white dark:hover:bg-neutral-800 transition-colors relative'>
             💭
-            <button
-              type="button"
-              className="text bg-transparent border-none p-0 flex items-center gap-x-1"
-              onClick={() => setCommunityOpen((v) => !v)}
-              ref={communityRef}
-              aria-haspopup="true"
-              aria-expanded={communityOpen}
-            >
-              Сообщество
-            </button>
-            {communityOpen && (
-              <div className="absolute left-10 top-full mt-1 bg-white dark:bg-neutral-800 rounded-lg shadow-lg py-2 w-48 z-50 border border-neutral-200 dark:border-neutral-700">
-                <a href="/social" className="block px-4 py-2 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">Главная</a>
-                <a href="/account/profile" className="block px-4 py-2 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">Личный профиль</a>
-              </div>
-            )}
+            <a href="/social" className="text dark:text-white">Сообщество</a>
+          </p>
+          <p className='flex gap-x-2 w-full py-2 px-10 hover:bg-white dark:hover:bg-neutral-800 transition-colors'>
+            👤<a href="/account/profile" className="text dark:text-white">Профиль</a>
           </p>
           <p className='flex gap-x-2 w-full py-2 px-10 hover:bg-white dark:hover:bg-neutral-800 transition-colors'>
             🏠<a href="/account/home" className='text dark:text-white'>Главная</a>

@@ -12,18 +12,10 @@ import AccountMenu from '../../components/account/AccountMenu';
 import Modal from '../../components/ui/Modal';
 import FeedbackForm from '../../components/FeedbackForm';
 import { useMovingBg } from '../../utils/movingBg';
+import { Helmet } from 'react-helmet-async';
 
 // Base API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-// Импортируем все изображения из папки covers
-const coverImages = [
-  '/assets/covers/cover1.jpg',
-  '/assets/covers/cover2.jpg',
-  '/assets/covers/cover3.jpg',
-  '/assets/covers/cover4.jpg',
-  '/assets/covers/cover5.jpg',
-];
 
 const AccountHome = () => {
   const navigate = useNavigate();
@@ -111,26 +103,17 @@ const AccountHome = () => {
           username: user.username,
           has_pin: user.has_pin,
           pin_code: !!user.pin_code,
-          pin_set: user.pin_set
+          pin_set: user.pin_set,
+          dont_remind_pin: user.dont_remind_pin
         });
         
-        // Try checking PIN directly from user object first
-        const userHasPinInState = 
-          user.has_pin === true || 
-          !!user.pin_code || 
-          user.pin_set === true;
-        
-        if (userHasPinInState) {
-          console.log('User already has PIN according to state, not showing banner');
-          setShowPinOffer(false);
+        // Only show PinOffer if user has no PIN and has NOT opted to be reminded later
+        if (!user.has_pin && !user.dont_remind_pin) {
+          console.log('User has no PIN and has not opted out, showing banner');
+          setShowPinOffer(true);
         } else {
-          // Double-check with the database
-          console.log('Checking PIN status with API...');
-          checkUserPinCode(user.id).then(hasPinResult => {
-            console.log('API PIN check result:', hasPinResult);
-            // Показываем баннер только если у пользователя НЕТ пин-кода
-            setShowPinOffer(!hasPinResult);
-          });
+          console.log('User has PIN or opted out, not showing banner');
+          setShowPinOffer(false);
         }
         
         // Загружаем последнюю запись пользователя, если она еще не загружена
@@ -171,27 +154,20 @@ const AccountHome = () => {
           username: userData.username,
           has_pin: userData.has_pin,
           pin_code: !!userData.pin_code,
-          pin_set: userData.pin_set
+          pin_set: userData.pin_set,
+          dont_remind_pin: userData.dont_remind_pin
         });
         
         updateUser(userData);
         setLoading(false);
         
-        // Try checking PIN directly from the API response
-        const userHasPinInResponse = 
-          userData.has_pin === true || 
-          !!userData.pin_code || 
-          userData.pin_set === true;
-        
-        if (userHasPinInResponse) {
-          console.log('User has PIN according to API response, not showing banner');
-          setShowPinOffer(false);
+        // Only show PinOffer if user has no PIN and has NOT opted to be reminded later
+        if (!userData.has_pin && !userData.dont_remind_pin) {
+          console.log('User has no PIN and has not opted out, showing banner');
+          setShowPinOffer(true);
         } else {
-          // Double-check with a separate call if needed
-          const hasPinResult = await checkUserPinCode(userData.id);
-          console.log('Separate PIN check result:', hasPinResult);
-          // Показываем баннер только если у пользователя НЕТ пин-кода
-          setShowPinOffer(!hasPinResult);
+          console.log('User has PIN or opted out, not showing banner');
+          setShowPinOffer(false);
         }
         
         // Загружаем последнюю запись пользователя
@@ -255,6 +231,7 @@ const AccountHome = () => {
 
   const handleDontRemind = () => {
     setShowPinOffer(false);
+    updateUser();
   };
 
   const handleOpenFeedbackModal = () => {
@@ -282,6 +259,19 @@ const AccountHome = () => {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>
+          {loading
+            ? 'Загрузка...'
+            : error
+              ? 'Ошибка'
+              : user
+                ? user.username
+                : 'Имя пользователя'}
+        </title>
+      </Helmet>
+
     <div className="h-screen flex flex-col">
       <AccountHeader />
       <div className="flex flex-grow w-full">
@@ -306,6 +296,12 @@ const AccountHome = () => {
               >
                 Новая запись
               </button>
+              <button
+                onClick={handleOpenFeedbackModal}
+                className="px-4 sm:px-5 py-2 sm:py-3 bg-blue-500 text-white text-base sm:text-lg md:text-xl rounded-full mt-2 hover:bg-blue-600 transition-colors"
+              >
+                Обратная связь
+              </button>
             </div>
           </div>
 
@@ -329,12 +325,9 @@ const AccountHome = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleOpenFeedbackModal}
-            className="bg-[var(--color-green)] text-white px-6 py-3 w-fit rounded-full shadow-lg hover:bg-[var(--color-green)] transition-colors"
-          >
-            Обратная связь
-          </button>
+          {showPinOffer && (
+            <PinOffer onClose={handleDontRemind} onDontRemind={handleDontRemind} updateUser={updateUser} />
+          )}
 
           {showFeedbackModal && (
             <Modal onClose={handleCloseFeedbackModal}>
@@ -344,6 +337,8 @@ const AccountHome = () => {
         </section>
       </div>
     </div>
+    </>
+    
   );
 };
 

@@ -1,10 +1,13 @@
 import React from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-
+import { Helmet } from 'react-helmet-async'
 const UserAgreement = () => {
   return (
     <>
+    <Helmet>
+      <title>ТАЙМБУК - пользовательское соглашение</title>
+    </Helmet>
       <Header />
       <section className='grid grid-cols-1 md:grid-cols-3'>
         <div className='px-7 md:p-20 space-y-5 md:col-span-2 py-20'>

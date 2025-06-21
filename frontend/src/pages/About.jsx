@@ -3,9 +3,13 @@ import Header from '../components/Header'
 import FadeInSection from "../components/animation/FadeInSection";
 import Comments from '../components/Comments';
 import Footer from '../components/Footer';
+import { Helmet } from 'react-helmet-async';
 const About = () => {
   return (
     <>
+    <Helmet>
+        <title>ТАЙМБУК - о нас</title>
+    </Helmet>
     <div className="App min-h-screen ">
         <Header />
         <div className='space-y-56'>
