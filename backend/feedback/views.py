@@ -1,15 +1,16 @@
-from rest_framework import generics, permissions
-from .models import Feedback
-from .serializers import FeedbackSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .mailgun import send_feedback_email
 
-class FeedbackCreateView(generics.CreateAPIView):
-    queryset = Feedback.objects.all()
-    serializer_class = FeedbackSerializer
-    permission_classes = [permissions.AllowAny] # Allow unauthenticated feedback
-
-    def perform_create(self, serializer):
-        # If user is authenticated, assign them to the feedback
-        if self.request.user.is_authenticated:
-            serializer.save(user=self.request.user)
+class FeedbackView(APIView):
+    def post(self, request):
+        email = request.data.get('email', '')
+        message = request.data.get('message', '')
+        if not message:
+            return Response({'error': 'Message is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        success = send_feedback_email(email, message)
+        if success:
+            return Response({'success': True})
         else:
-            serializer.save() 
+            return Response({'error': 'Failed to send email.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 

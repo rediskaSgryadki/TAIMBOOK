@@ -108,16 +108,22 @@ class UserLoginSerializer(serializers.Serializer):
         return attrs
 
 class PinCodeSerializer(serializers.Serializer):
-    old_pin = serializers.CharField(max_length=4, min_length=4, required=True)
+    old_pin = serializers.CharField(max_length=4, min_length=4, required=False)
     pin_code = serializers.CharField(max_length=4, min_length=4, required=True)
     confirm_pin = serializers.CharField(max_length=4, min_length=4, required=True)
 
     def validate(self, attrs):
         user = self.context['request'].user
-        if not user.pin_code or attrs['old_pin'] != user.pin_code:
-            raise serializers.ValidationError({"old_pin": "Старый пин-код неверен"})
+
+        if user.pin_code:
+            if 'old_pin' not in attrs or attrs['old_pin'] != user.pin_code:
+                raise serializers.ValidationError({"old_pin": "Старый пин-код неверен"})
+        elif 'old_pin' in attrs:
+            raise serializers.ValidationError({"old_pin": "У вас нет текущего пин-кода для изменения"})
+
         if attrs['pin_code'] != attrs['confirm_pin']:
             raise serializers.ValidationError({"pin_code": "Пин-коды не совпадают"})
+            
         return attrs
 
 class VerifyPinSerializer(serializers.Serializer):

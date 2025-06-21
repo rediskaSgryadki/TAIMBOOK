@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class EntrySerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Entry
@@ -14,7 +15,8 @@ class EntrySerializer(serializers.ModelSerializer):
             'font_size', 'text_align', 'is_bold', 'is_underline', 
             'is_strikethrough', 'list_type', 'location', 'cover_image', 
             'date', 'created_at', 'updated_at', 'hashtags', 'is_public',
-            'author'
+            'author',
+            'comments_count',
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -33,6 +35,9 @@ class EntrySerializer(serializers.ModelSerializer):
             'name': user.username,
             'photo': photo_url
         }
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
 
     def create(self, validated_data):
         try:

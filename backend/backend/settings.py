@@ -95,7 +95,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Медиа файлы
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join('/var/data', 'media')
 
 # CORS настройки
 CORS_ALLOWED_ORIGINS = [
