@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/static/css/main.865ec5a9.css",
+    "main.js": "/static/js/main.b00280f6.js",
+    "static/media/ZapusSans-SemiBold.ttf": "/static/media/ZapusSans-SemiBold.f78ef3ca3b64691c68be.ttf",
+    "static/media/11.06.2025 18_57_59.png": "/static/media/11.06.2025 18_57_59.e5f62aa0822a583d3605.png",
+    "static/media/04.05.2025 0_56_53.png": "/static/media/04.05.2025 0_56_53.a512b90b0b3235832895.png",
+    "static/media/04.05.2025 1_12_40.png": "/static/media/04.05.2025 1_12_40.edf4f43f1856ab94c7e0.png",
+    "static/media/ARCO.ttf": "/static/media/ARCO.82299ea0ae394bf80da9.ttf",
+    "index.html": "/index.html",
+    "main.865ec5a9.css.map": "/static/css/main.865ec5a9.css.map",
+    "main.b00280f6.js.map": "/static/js/main.b00280f6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.865ec5a9.css",
+    "static/js/main.b00280f6.js"
+  ]
+}
